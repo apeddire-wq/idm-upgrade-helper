@@ -1,4 +1,4 @@
-# Upgrade rules / migration model for ipa-upgrade-helper.
+# Upgrade rules / migration model for idm-upgrade-helper.
 # Extracted from DESIGN.md §4 (source of truth). Verified vs docs.redhat.com
 # "Migrating to IdM" + "Considerations in adopting RHEL" guides.
 meta:

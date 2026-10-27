@@ -1,4 +1,4 @@
-# Prerequisites & environment checks for ipa-upgrade-helper.
+# Prerequisites & environment checks for idm-upgrade-helper.
 # Extracted from DESIGN.md §5.3 (source of truth). Prose from the web-lab
 # prerequisitesData; doc URLs sourced per RHEL major from docs.redhat.com and
 # byte-verified 2026-09-09. `docs` is keyed by RHEL major, selected by the TARGET version.

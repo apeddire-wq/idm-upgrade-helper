@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""ipa-upgrade-helper (2.0) — interactive RHEL IdM / FreeIPA upgrade advisor, with an
-opt-in automated MINOR upgrade.
+"""idm-upgrade-helper (1.0) — interactive, read-only RHEL IdM / FreeIPA upgrade advisor.
 
 Reproduces Red Hat's login-gated "IdM Upgrade Helper" web portal as an on-box CLI.
 It walks the portal's 5-step wizard (Upgrade Options, Deprecated & Removed
@@ -13,19 +12,6 @@ a SOFT gate before the upgrade steps (recommends clearing findings, then asks wh
 to proceed anyway; default No). Availability-gated: shutil.which("ipa-healthcheck") +
 root. When unavailable (e.g. a non-IdM box) it falls back to printed guidance and
 never executes any system command.
-
-Release 2.0 adds an OPT-IN, MINOR-ONLY automated upgrade, triggered ONLY by `minor --apply`
-(the --apply flag exists only on the `minor` subcommand, so `major --apply` and a bare
-`--apply` are rejected — major migrations stay advisory by construction). After the
-advisory output, --apply shows a warning/disclaimer and will EXECUTE the minor upgrade
-on this server only if every guard passes: must run as root on a real RHEL IdM host
-(dnf + subscription-manager present) at an interactive terminal; the operator confirms
-a backup/snapshot was taken; `ipa-healthcheck` runs and is CLEAN (hard gate); and the
-operator types the exact target version to confirm. It then runs, with live output:
-`subscription-manager release --set=<target>` -> `dnf clean all` -> `dnf upgrade`
-(Option 1) or `dnf distro-sync` (Option 2, operator's choice). Without --apply the tool
-remains a read-only advisor. Major migration is NEVER automated (replica-based,
-multi-host; cannot be safely scripted as one shot).
 
 Design decisions this tool encodes (see DESIGN.md / project memory):
   #1 Source RHEL version is AUTO-DETECTED (/etc/os-release, then /etc/redhat-release),
@@ -45,10 +31,9 @@ Design decisions this tool encodes (see DESIGN.md / project memory):
   #5 Output goes to screen; --report FILE also writes the full result to a file.
   #6 Catalogs are YAML (loaded via PyYAML).
 
-Read-only by default: unless `minor --apply` is given, this tool never changes the
-system. It does not execute the catalog `detect` hints against the box — it prints them
-as "how to check" guidance and prompts for the environment questions. A future --detect
-mode will turn the hints into probes.
+Read-only: this tool never changes the system. It does not execute the catalog
+`detect` hints against the box — it prints them as "how to check" guidance and prompts
+for the environment questions. A future --detect mode will turn the hints into probes.
 """
 
 import argparse
@@ -70,8 +55,8 @@ except ImportError:
 
 CATALOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalogs")
 
-PROG = "ipa-upgrade-helper"
-VERSION = "2.0"
+PROG = "idm-upgrade-helper"
+VERSION = "1.0"
 
 
 # --------------------------------------------------------------------------- #
@@ -288,14 +273,21 @@ def match_deprecations(catalog, lo, hi):
     return buckets
 
 
+def stream_relevant(entry, target_major):
+    """A TP entry with no `stream` applies to all majors; otherwise it must match."""
+    stream = entry.get("stream")
+    if not stream:
+        return True
+    return stream == "rhel%d" % target_major
+
+
 def match_known_issues(catalog, target):
     """Known issues that are OPEN at the target version (cumulative model).
 
     Mirrors the Red Hat release notes: an issue is re-listed every version until it
     is fixed. Each entry is tagged with first_seen (the version it started in). An
     issue is open at target T when first_seen <= T AND (still_open OR T < resolved_in).
-    Only the target matters (the issue you will live with after upgrading), not the
-    whole interval. Returns (entry, first_seen) pairs.
+    Returns (entry, first_seen) pairs.
     """
     tv = vt(target)
     tmajor = tv[0] if tv else None
@@ -335,9 +327,7 @@ def section_doc_link(catalog, ctx):
 def match_new_features(catalog, lo, hi, target_major):
     """New features gained along the path: added_in in (lo, hi] (point-in-time).
 
-    Features are version-specific (tagged by added_in); a feature re-announced in a
-    later version appears once per version, mirroring the release notes. Returns
-    (entry, added_in) pairs.
+    Returns (entry, added_in) pairs.
     """
     hits = []
     for f in catalog.get("new_features", []):
@@ -346,14 +336,6 @@ def match_new_features(catalog, lo, hi, target_major):
         if in_interval(f.get("added_in"), lo, hi):
             hits.append((f, f.get("added_in")))
     return hits
-
-
-def stream_relevant(entry, target_major):
-    """A TP entry with no `stream` applies to all majors; otherwise it must match."""
-    stream = entry.get("stream")
-    if not stream:
-        return True
-    return stream == "rhel%d" % target_major
 
 
 def match_tech_previews(catalog, lo, hi, target):
@@ -1080,187 +1062,12 @@ def section_tech_previews(out, cat, ctx):
 
 
 # --------------------------------------------------------------------------- #
-# 2.0: opt-in automated MINOR upgrade (minor --apply). Executes real commands —
-# heavily guarded. Major migration is never automated.
-# --------------------------------------------------------------------------- #
-APPLY_DISCLAIMER = (
-    "You requested --apply: this tool will now EXECUTE a minor upgrade on THIS "
-    "server, changing installed packages. This is a production-affecting operation: "
-    "IdM services will be updated and the host may need a reboot afterwards. Only "
-    "proceed if you have a verified, restorable backup AND a VM snapshot, the host is "
-    "healthy, and you understand how to roll back. The upgrade runs only on this "
-    "server; other replicas are not touched (update them one at a time, waiting at "
-    "least 10 minutes between each). Automated upgrades are supported for MINOR "
-    "updates only."
-)
-
-
-def _run_live(out, cmd):
-    """Execute a command with live (inherited) stdio. Return True on exit code 0.
-
-    The command is echoed first, then run with inherited stdio so the operator sees
-    the real command AND its full output stream live on the terminal (and can answer
-    dnf's own transaction prompt). Output is NOT captured into the --report buffer.
-    """
-    out.line()
-    out.line("------------------------------------------------------------------------")
-    out.command(" ".join(cmd))
-    out.line("------------------------------------------------------------------------")
-    try:
-        rc = subprocess.run(cmd).returncode
-    except OSError as exc:
-        out.sev("error", "Could not run %s (%s)." % (cmd[0], exc))
-        return False
-    if rc != 0:
-        out.sev("error", "`%s` exited with status %d." % (" ".join(cmd), rc))
-        return False
-    out.sev("info", "completed: %s" % " ".join(cmd))
-    return True
-
-
-def _healthcheck_gate_for_apply(out, args):
-    """SOFT gate for --apply: run ipa-healthcheck, show any findings, and ask the
-    operator whether to proceed. Returns True to proceed, False to abort.
-
-    Every prompt defaults to No (Enter aborts), so proceeding is always an explicit,
-    informed choice. --skip-healthcheck opts out of the check entirely.
-    """
-    if getattr(args, "skip_healthcheck", False):
-        out.sev("warning",
-                "ipa-healthcheck skipped (--skip-healthcheck): upgrading WITHOUT health "
-                "verification.")
-        return True
-
-    exe = shutil.which("ipa-healthcheck")
-    if not exe:
-        out.sev("warning",
-                "ipa-healthcheck is not installed, so server health cannot be verified "
-                "(install it with: sudo dnf install ipa-healthcheck).")
-        return yes_no("Proceed with the upgrade WITHOUT health verification?",
-                      default=False)
-
-    out.line("Verifying server health with ipa-healthcheck…")
-    try:
-        proc = subprocess.run([exe, "--output-type", "json"],
-                              capture_output=True, text=True, timeout=HC_TIMEOUT)
-        results = json.loads(proc.stdout or "[]")
-    except (subprocess.TimeoutExpired, OSError, ValueError) as exc:
-        out.sev("warning", "ipa-healthcheck could not be run (%s)." % exc)
-        return yes_no("Proceed with the upgrade WITHOUT health verification?",
-                      default=False)
-
-    findings = [r for r in results if str(r.get("result", "")).upper() != "SUCCESS"]
-    if not findings:
-        out.sev("info", "ipa-healthcheck is clean.")
-        return True
-
-    out.sev("warning",
-            "ipa-healthcheck reported %d non-SUCCESS finding(s):" % len(findings))
-    for r in findings:
-        sev = HC_SEVERITY.get(str(r.get("result", "")).upper(), "info")
-        kw = r.get("kw", {}) or {}
-        msg = kw.get("msg") or kw.get("message") or r.get("result", "")
-        out.sev(sev, "    %s.%s [%s] %s" % (r.get("source", ""), r.get("check", ""),
-                                            r.get("result", ""), msg))
-    out.line("Red Hat recommends resolving these before upgrading.")
-    return yes_no("Proceed with the upgrade ANYWAY, despite the findings above?",
-                  default=False)
-
-
-def apply_minor_upgrade(out, cat, ctx, args):
-    """Execute the minor upgrade on this host, behind all guards. Returns an rc."""
-    target = ctx["target_version"]
-    out.heading("Automated Minor Upgrade (--apply)")
-
-    # Mandatory preconditions (not overridable).
-    if not sys.stdin.isatty():
-        out.sev("error", "--apply requires an interactive terminal. Aborting.")
-        return 3
-    if not (hasattr(os, "geteuid") and os.geteuid() == 0):
-        out.sev("error", "--apply must be run as root (e.g. with sudo). Aborting.")
-        return 3
-    if not shutil.which("dnf") or not shutil.which("subscription-manager"):
-        out.sev("error",
-                "dnf and/or subscription-manager were not found — this does not look "
-                "like a RHEL host. --apply is only supported on the IdM server itself. "
-                "Aborting.")
-        return 3
-
-    out.sev("warning", APPLY_DISCLAIMER)
-
-    # Guard 1: confirmed backup / snapshot.
-    if not yes_no("Have you taken a full ipa-backup AND a VM snapshot of this server?",
-                  default=False):
-        out.sev("error",
-                "Backup not confirmed. Take a backup and snapshot first (see the backup "
-                "step above), then re-run. Aborting.")
-        return 1
-
-    # Guard 2: ipa-healthcheck soft gate (run it, show findings, ask y/N — default No).
-    if not _healthcheck_gate_for_apply(out, args):
-        out.sev("info", "Aborted at the health check. Nothing was changed.")
-        return 1
-
-    # Guard 3: typed confirmation of the exact target version.
-    try:
-        typed = input("\nType the target version exactly (%s) to proceed, or anything "
-                      "else to abort: " % target).strip()
-    except (EOFError, KeyboardInterrupt):
-        out.line("\nAborted.")
-        return 130
-    if typed != target:
-        out.sev("info", "Confirmation '%s' did not match target '%s'. Aborting."
-                % (typed, target))
-        return 1
-
-    # Which package command (Q2 default: ask the operator).
-    dnf_cmd = choose(
-        "Select the package-upgrade command to run:",
-        [("upgrade", "dnf upgrade (Option 1 — packages with updates available)"),
-         ("distro-sync", "dnf distro-sync (Option 2 — align to latest for your profile)")],
-    )
-
-    out.subheading("Executing the minor upgrade to RHEL %s" % target)
-    # Guard 4: set the target release first.
-    if not _run_live(out, ["subscription-manager", "release", "--set=%s" % target]):
-        out.sev("error", "Failed to set the target release. Aborting before any package "
-                         "changes.")
-        return 1
-    if not _run_live(out, ["dnf", "clean", "all"]):
-        out.sev("error", "'dnf clean all' failed. Aborting.")
-        return 1
-    # No -y: dnf shows the transaction and prompts for its own confirmation.
-    if not _run_live(out, ["dnf", dnf_cmd]):
-        out.sev("error",
-                "The package upgrade did not complete successfully. Review the output "
-                "above. If the server is in a bad state, restore from your backup or VM "
-                "snapshot.")
-        return 1
-
-    out.sev("info", "Minor upgrade to RHEL %s completed on this server." % target)
-    out.subheading("After the upgrade")
-    out.line("- The updated schema replicates to other servers automatically; you need "
-             "not update every server's packages immediately.")
-    out.line("- Update additional IdM servers one at a time, waiting at least 10 minutes "
-             "between each so replication can settle.")
-    out.line("- Re-run `sudo ipa-healthcheck` to confirm the server is healthy, and "
-             "reboot if a new kernel or core libraries were updated.")
-    return 0
-
-
-# --------------------------------------------------------------------------- #
 # Driver.
 # --------------------------------------------------------------------------- #
 def run_wizard(out, cat, args):
-    apply_mode = getattr(args, "apply", False)
     out.heading("Red Hat IdM Upgrade Helper")
-    if apply_mode:
-        out.line("Upgrade advisor for RHEL IdM / FreeIPA, running in --apply mode: after "
-                 "the advice below it can EXECUTE the minor upgrade on this server "
-                 "(guarded).")
-    else:
-        out.line("Read-only upgrade advisor for RHEL IdM / FreeIPA. This tool never "
-                 "changes your system.")
+    out.line("Read-only upgrade advisor for RHEL IdM / FreeIPA. This tool never "
+             "changes your system.")
 
     ctx = step_upgrade_options(out, cat, args)
     if ctx.get("stop"):
@@ -1274,20 +1081,13 @@ def run_wizard(out, cat, args):
     section_known_issues(out, cat, ctx)
     step_prerequisites(out, cat, ctx)
     step_environment_checks(out, cat, ctx)
-    # In --apply mode the healthcheck runs as a guard inside apply_minor_upgrade (soft
-    # y/N gate right before execution), so skip the advisory run here to avoid asking
-    # twice. Advisory/non-apply runs keep the normal soft gate.
-    if not apply_mode and step_healthcheck(out, ctx, args) == "stop":
+    if step_healthcheck(out, ctx, args) == "stop":
         out.heading("Stopped")
         out.line("Resolve the ipa-healthcheck findings above, then re-run this tool.")
         return 1
     step_upgrade_steps(out, cat, ctx)
     section_tech_previews(out, cat, ctx)
     section_new_features(out, cat, ctx)
-
-    # 2.0: opt-in automated minor upgrade (only minor --apply reaches here with apply set).
-    if apply_mode and ctx["upgrade_type"] == "minor":
-        return apply_minor_upgrade(out, cat, ctx, args)
 
     out.heading("Done")
     out.line("Summary: %s upgrade from RHEL %s to RHEL %s."
@@ -1328,38 +1128,34 @@ upgrade types:
   minor   In-place update to the next minor release within the same major
           (e.g. RHEL 9.6 -> 9.7). Walks you through setting the target release,
           cleaning the package cache, and running `dnf upgrade`/`dnf distro-sync`
-          on each server in the topology. The only mode that can EXECUTE the
-          upgrade for you, via `minor --apply`.
+          on each server in the topology.
   major   Migration to the next major release's latest minor (e.g. RHEL 9 -> 10).
           In-place upgrades are NOT supported for IdM servers: this mode advises
           the replica-based path -- stand up new major-version IdM replicas
           alongside the existing environment, move the CA renewal role, then
-          retire the old servers. Advisory-only (no --apply).
+          retire the old servers.
 
 examples:
   # Interactive: auto-detect this host's RHEL version and prompt for everything
-  ipa-upgrade-helper
+  idm-upgrade-helper
 
   # Advise a minor update, overriding the detected source version
-  ipa-upgrade-helper --current 9.6 minor
+  idm-upgrade-helper --current 9.6 minor
 
   # Show EVERYTHING (deprecated/removed, Technology Previews, new features);
   # the default view is concise: steps, warnings, and known issues
-  ipa-upgrade-helper --all minor
+  idm-upgrade-helper --all minor
 
   # Advise a major migration and save a plain-text copy of the advice
-  ipa-upgrade-helper major --report ~/idm-major-upgrade.txt
+  idm-upgrade-helper major --report ~/idm-major-upgrade.txt
 
   # Run the pre-upgrade ipa-healthcheck without prompting
-  ipa-upgrade-helper --run-healthcheck minor
+  idm-upgrade-helper --run-healthcheck minor
 
   # Skip the healthcheck entirely (e.g. on a host where it is not installed)
-  ipa-upgrade-helper --skip-healthcheck minor
+  idm-upgrade-helper --skip-healthcheck minor
 
-  # EXECUTE a minor upgrade after all guards pass (otherwise advisory-only)
-  ipa-upgrade-helper minor --apply
-
-Read-only by default: without `minor --apply`, this tool never changes the system.
+Read-only: this tool is advisory-only and never changes the system.
 """
 
 
@@ -1377,18 +1173,11 @@ def build_parser():
         dest="upgrade_type", metavar="{minor,major}",
         help="optionally choose the upgrade type directly (otherwise you are prompted)")
     minor = sub.add_parser(
-        "minor",
-        help="in-place update to the next minor (x.y -> x.y+1); supports --apply")
+        "minor", help="in-place update to the next minor (x.y -> x.y+1)")
     _add_common_args(minor, suppress=True)
-    minor.add_argument(
-        "--apply", action="store_true", default=argparse.SUPPRESS,
-        help="EXECUTE the minor upgrade on this server after a disclaimer and guards "
-             "(root + real RHEL IdM host + confirmed backup + clean ipa-healthcheck + "
-             "typed confirmation). Advisory-only without this flag. Minor upgrades only.")
     major = sub.add_parser(
         "major",
-        help="replica-based migration to the next major's latest minor "
-             "(advisory-only)")
+        help="replica-based migration to the next major's latest minor")
     _add_common_args(major, suppress=True)
     return parser
 

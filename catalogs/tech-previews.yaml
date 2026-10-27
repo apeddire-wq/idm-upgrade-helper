@@ -1,4 +1,4 @@
-# Version-keyed Technology Preview catalog for ipa-upgrade-helper.
+# Version-keyed Technology Preview catalog for idm-upgrade-helper.
 # Extracted from DESIGN.md §5.4 (source of truth; full per-minor verification notes live there).
 # Verified 2026-09-08/09 vs primary per-minor Release Notes (TP -> Identity Management
 # subsection), RHEL 8.0 -> 10.2.

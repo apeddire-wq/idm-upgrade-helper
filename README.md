@@ -1,4 +1,4 @@
-# ipa-upgrade-helper
+# idm-upgrade-helper
 
 An interactive, **read-only** command-line advisor for upgrading Red Hat Identity
 Management (IdM) / FreeIPA servers across RHEL minor and major versions. It reproduces
@@ -19,8 +19,8 @@ Two editions ship side by side — pick the one that matches how much you want t
 
 | File | Edition | What it does |
 |------|---------|--------------|
-| `ipa-upgrade-helper-1.0.py` | **1.0 — Advisory** | Read-only. Walks the 5-step wizard and prints the upgrade runbook. Runs `ipa-healthcheck` read-only when available (soft gate). **Never changes the system.** |
-| `ipa-upgrade-helper-2.0.py` | **2.0 — Advisory + opt-in apply** | Everything in 1.0, **plus** an opt-in, heavily-guarded automated **minor** upgrade via `minor --apply` (root + real RHEL host + confirmed backup + healthcheck + typed confirmation). Major migrations remain advisory only. |
+| `idm-upgrade-helper-1.0.py` | **1.0 — Advisory** | Read-only. Walks the 5-step wizard and prints the upgrade runbook. Runs `ipa-healthcheck` read-only when available (soft gate). **Never changes the system.** |
+| `idm-upgrade-helper-2.0.py` | **2.0 — Advisory + opt-in apply** | Everything in 1.0, **plus** an opt-in, heavily-guarded automated **minor** upgrade via `minor --apply` (root + real RHEL host + confirmed backup + healthcheck + typed confirmation). Major migrations remain advisory only. |
 
 ## Requirements
 
@@ -32,20 +32,20 @@ Two editions ship side by side — pick the one that matches how much you want t
 
 ```bash
 # Interactive: auto-detect this host's RHEL version and prompt for the rest
-python3 ipa-upgrade-helper-2.0.py
+python3 idm-upgrade-helper-2.0.py
 
 # Choose the upgrade type directly
-python3 ipa-upgrade-helper-2.0.py minor
-python3 ipa-upgrade-helper-2.0.py major
+python3 idm-upgrade-helper-2.0.py minor
+python3 idm-upgrade-helper-2.0.py major
 
 # Override the source version (e.g. off-box) and show everything
-python3 ipa-upgrade-helper-2.0.py --current 9.6 --all minor
+python3 idm-upgrade-helper-2.0.py --current 9.6 --all minor
 
 # Save a plain-text copy of the advice
-python3 ipa-upgrade-helper-2.0.py major --report ~/idm-upgrade.txt
+python3 idm-upgrade-helper-2.0.py major --report ~/idm-upgrade.txt
 
 # (2.0 only) EXECUTE a guarded minor upgrade on this server
-sudo python3 ipa-upgrade-helper-2.0.py minor --apply
+sudo python3 idm-upgrade-helper-2.0.py minor --apply
 ```
 
 By default the output is **concise** (upgrade steps, warnings, and known issues). Add

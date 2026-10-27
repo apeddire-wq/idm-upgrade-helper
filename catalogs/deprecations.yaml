@@ -1,4 +1,4 @@
-# Version-keyed deprecated / removed / changed catalog for ipa-upgrade-helper.
+# Version-keyed deprecated / removed / changed catalog for idm-upgrade-helper.
 # Extracted from DESIGN.md §5.1 (source of truth; full provenance/audit notes live there).
 # Each entry pins the exact RHEL x.y where a feature was deprecated / removed / changed
 # (verified 2026-09-08 vs primary docs.redhat.com per-minor Release Notes + Considerations
