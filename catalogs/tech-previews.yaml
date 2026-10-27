@@ -1,0 +1,116 @@
+# Version-keyed Technology Preview catalog for ipa-upgrade-helper.
+# Extracted from DESIGN.md §5.4 (source of truth; full per-minor verification notes live there).
+# Verified 2026-09-08/09 vs primary per-minor Release Notes (TP -> Identity Management
+# subsection), RHEL 8.0 -> 10.2.
+# Fields: introduced_tp = first minor listed as TP; last_tp = last minor confirmed still TP
+# (omit when still_tp: true); ga_in = minor it graduated (suffix "?" = INFERRED from dropping
+# off the TP list, NOT confirmed on a New-features page; no "?" = confirmed); still_tp: true =
+# still TP as of 10.2 (never graduated). stream (rhel8/rhel9) gates matching to that major line.
+
+technology_previews:
+
+  # --- IdM API / DNS / core -----------------------------------
+  - {id: tp-json-rpc-api, component: idm-api, introduced_tp: "8.0", ga_in: "9.3", last_tp: "9.3", src: rn,
+     feature: "Identity Management JSON-RPC API available as Technology Preview",
+     detect: "custom tooling using the IdM JSON-RPC API / API browser",
+     note: "TP from 8.0 (re-verified 2026-10-25: present 8.0/8.1/8.2/8.3 IdM TP sections) through 9.x. GA confirmed RHEL 9.3 (9.3 New-features: 'IdM API fully supported since 9.3'); the 9.3 TP list still lists it (Red Hat doc lag). Corrects an earlier wrong intro 8.0->8.4 and inferred ga 9.4"}
+  - {id: tp-dnssec-idm, component: idm-dns, introduced_tp: "8.0", still_tp: true, src: rn,
+     feature: "DNSSEC available as Technology Preview in IdM",
+     detect: "IdM integrated DNS with DNSSEC signing enabled (ipa dnszone-mod --dnssec)",
+     note: "Listed as TP continuously 8.0->10.2 (never graduated). Related: known_issues dnssec-broken-10.0 and openssl-pkcs11 dep"}
+  - {id: tp-dot-idm, component: idm-dns, introduced_tp: "9.6", still_tp: true, src: rn,
+     feature: "DNS over TLS (DoT) in IdM deployments is available as a Technology Preview",
+     detect: "ipa-server/-client installed with --dns-over-tls; ipa-*-encrypted-dns pkgs",
+     note: "TP 9.6,9.7 and 10.0,10.1,10.2"}
+  - {id: tp-dot-ansible-freeipa, component: idm-dns, introduced_tp: "9.7", still_tp: true, src: rn,
+     feature: "Encrypted DNS with DoT is now available in ansible-freeipa installations of IdM as a Technology Preview",
+     detect: "ansible-freeipa (freeipa.ansible_freeipa) deploying DoT-encrypted DNS",
+     note: "TP 9.7 (also on the 9.8 aggregated page) and 10.1,10.2"}
+
+  # --- IdM certificate service (ACME) -------------------------
+  - {id: tp-acme-base, component: idm-cert, introduced_tp: "8.4", ga_in: "9.2?", src: rn,
+     feature: "ACME available as a Technology Preview",
+     detect: "IdM ACME responder enabled (ipa-acme-manage status)",
+     note: "TP 8.4-8.10 and 9.0,9.1; base ACME dropped after 9.1 (=>GA 9.2), yet 9.6/9.7 pages re-list it. GA vs re-listing UNRESOLVED"}
+  - {id: tp-acme-pruning, component: idm-cert, introduced_tp: "9.2", last_tp: "9.5", src: rn,
+     feature: "ACME supports automatically removing expired certificates as a Technology Preview",
+     detect: "ipa-acme-manage pruning enabled",
+     note: "TP 9.2,9.3,9.4,9.5; not listed 9.6+. Disposition after 9.5 unverified"}
+  - {id: tp-pki-healthcheck, component: idm-cert, introduced_tp: "8.2", last_tp: "8.2", src: rn,
+     feature: "Checking the overall health of your public key infrastructure is now available as a Technology Preview",
+     detect: "pki-healthcheck present; PKI checks folded into ipa-healthcheck",
+     note: "Appears ONLY in the 8.2 TP list (BZ-1303254)"}
+  - {id: tp-auth-indicators-pkinit, component: idm, introduced_tp: "8.2", last_tp: "8.2", src: rn,
+     feature: "IdM now supports authentication indicators for PKINIT (Technology Preview)",
+     detect: "PKINIT authentication indicators configured",
+     note: "8.2 only (BZ-1731053); GA'd before the 8.4 cumulative list. Historical / low upgrade-advisory value"}
+
+  # --- External IdP / SSSD OAuth2 (RHEL 8 stream) -------------
+  - {id: tp-idp-delegation-rhel8, component: idm-idp, introduced_tp: "8.7", ga_in: "8.10", stream: rhel8, src: rn,
+     feature: "RHEL IdM allows delegating user authentication to external identity providers as a Technology Preview",
+     detect: "ipa idp-find; users with --user-auth-type=idp",
+     note: "RHEL 8 stream: TP 8.7,8.8,8.9; GA in 8.10 - CONFIRMED (Jira-RHELPLAN-123140)"}
+  - {id: tp-sssd-idp-pkg-rhel8, component: sssd, introduced_tp: "8.7", last_tp: "8.10", stream: rhel8, src: rn,
+     feature: "sssd-idp sub-package available as a Technology Preview",
+     detect: "rpm -q sssd-idp; oidc_child / krb5 idp plugin in use",
+     note: "RHEL 8 stream: TP 8.7-8.10"}
+  - {id: tp-sssd-krb5-idp-rhel8, component: sssd, introduced_tp: "8.7", last_tp: "8.10", stream: rhel8, src: rn,
+     feature: "SSSD internal krb5 idp plugin available as a Technology Preview",
+     detect: "krb5 idp plugin (OAuth2) configured in SSSD",
+     note: "RHEL 8 stream: TP 8.7-8.10"}
+
+  # --- External IdP / SSSD OAuth2 (RHEL 9 stream, re-introduced) ---
+  - {id: tp-idp-delegation-rhel9, component: idm-idp, introduced_tp: "9.1", ga_in: "9.4", stream: rhel9, src: rn,
+     feature: "RHEL IdM allows delegating user authentication to external identity providers as a Technology Preview",
+     detect: "ipa idp-find; users with --user-auth-type=idp",
+     note: "RHEL 9 stream re-intro at 9.1 (9.0 forked before the 8.7 landing). TP 9.1,9.2,9.3; absent from 9.4 TP list; 9.4 New-features announces external-IdP auth => GA 9.4 (confirmed 2026-10-25)"}
+  - {id: tp-sssd-idp-pkg-rhel9, component: sssd, introduced_tp: "9.1", ga_in: "9.4", stream: rhel9, src: rn,
+     feature: "sssd-idp sub-package available as a Technology Preview",
+     detect: "rpm -q sssd-idp",
+     note: "RHEL 9 stream: TP 9.1,9.2,9.3; absent from 9.4 TP list => GA 9.4 (confirmed by drop-off 2026-10-25)"}
+  - {id: tp-sssd-krb5-idp-rhel9, component: sssd, introduced_tp: "9.1", ga_in: "9.4", stream: rhel9, src: rn,
+     feature: "SSSD internal krb5 idp plugin available as a Technology Preview",
+     detect: "krb5 idp plugin configured in SSSD",
+     note: "RHEL 9 stream: TP 9.1,9.2,9.3; absent from 9.4 TP list => GA 9.4 (confirmed by drop-off 2026-10-25)"}
+  - {id: tp-sssd-generic-idp, component: sssd, introduced_tp: "10.2", still_tp: true, src: rn,
+     feature: "SSSD supports generic Identity Provider integration (Technology Preview)",
+     detect: "SSSD generic IdP provider (Keycloak / Entra ID) configured",
+     note: "New TP in 10.2 (SSSD subsection). Distinct from the OAuth2 idp plugins above"}
+
+  # --- IdM Web UI / login ------------------------------------
+  - {id: tp-modern-web-ui, component: idm-webui, introduced_tp: "9.8", still_tp: true, src: rn,
+     feature: "The IdM Modern Web UI is available (Technology Preview)",
+     detect: "modern web UI endpoint (/ipa/modern-ui) enabled/in use",
+     note: "New TP in 9.8; also newly listed in 10.2 (RHEL 10 stream). Still TP"}
+  - {id: tp-passwordless-gdm, component: idm-idp, introduced_tp: "10.2", still_tp: true, src: rn,
+     feature: "Passwordless authentication mechanisms are available in GDM (Technology Preview)",
+     detect: "GDM configured with switchable auth (external IdP / FIDO2 passkeys) via authselect+SSSD",
+     note: "New TP in 10.2"}
+
+  # --- IdM data migration ------------------------------------
+  - {id: tp-idm-to-idm-migration, component: idm, introduced_tp: "9.5", ga_in: "9.7", src: rn,
+     feature: "IdM-to-IdM migration is available as a Technology Preview",
+     detect: "use of the ipa-migrate command",
+     note: "RHEL 9 stream: TP 9.5,9.6; GA 9.7 (9.7 New-features: 'IdM-to-IdM migration now fully supported', dropped from 9.7 TP list). ANOMALY: re-listed as TP again in 10.0, absent 10.1/10.2 (10-stream doc inconsistency)"}
+
+  # --- 389-ds / Directory Server -----------------------------
+  - {id: tp-lmdb-ds, component: 389-ds, introduced_tp: "9.5", last_tp: "9.5", src: rn,
+     feature: "LMDB database type is available in Directory Server as a Technology Preview",
+     detect: "nsslapd-backend-implement = mdb (LMDB) in cn=config",
+     note: "TP in 9.5. Ties to ds-bdb deprecation: RHEL 10 is LMDB-only. Disposition after 9.5 unverified"}
+  - {id: tp-logconv, component: 389-ds, introduced_tp: "10.0", last_tp: "10.0", src: rn,
+     feature: "logconv.py is available as a Technology Preview",
+     detect: "use of the logconv.py Directory Server utility",
+     note: "New TP in 10.0; absent 10.1,10.2 TP lists. GA vs dropped after 10.0 unverified"}
+
+  # --- IdM HSM support ---------------------------------------
+  - {id: tp-hsm-support, component: idm-cert, introduced_tp: "9.5", ga_in: "9.6", src: rn,
+     feature: "HSM support is available as a Technology Preview",
+     detect: "CA/KRA key pairs/certificates stored on an HSM",
+     note: "RHEL 9 stream: TP 9.5; GA 9.6 (9.6 New-features: 'HSM is now fully supported in IdM'; also re-announced in 10.0+10.1 New-features). Ties to constraint:hsm"}
+
+  # --- Samba on IdM domain member ----------------------------
+  - {id: tp-samba-idm-member, component: samba, introduced_tp: "8.2", last_tp: "8.10", stream: rhel8, src: rn,
+     feature: "Setting up a Samba server on an IdM domain member is provided as a Technology Preview",
+     detect: "ipa-client-samba configured; Samba server on an IdM client",
+     note: "File-systems TP subsection (Jira-RHELPLAN-13195). Re-verified 2026-10-25: present 8.2,8.3,8.4,8.7,8.10 (intro corrected 8.8->8.2). Not present in 9.0"}

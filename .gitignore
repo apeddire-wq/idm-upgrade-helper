@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.pyc
+
+# Internal / non-published material (do NOT publish)
+lab-translation.json
+DESIGN.md
+doc-verification-sources.md
+feedback-form.gs

@@ -1,0 +1,65 @@
+# Prerequisites & environment checks for ipa-upgrade-helper.
+# Extracted from DESIGN.md §5.3 (source of truth). Prose from the web-lab
+# prerequisitesData; doc URLs sourced per RHEL major from docs.redhat.com and
+# byte-verified 2026-09-09. `docs` is keyed by RHEL major, selected by the TARGET version.
+# NOTE: RHEL 8/9 hardware anchor is misspelled "recomendations" (one m) verbatim in
+# Red Hat's HTML - do NOT "fix" it. RHEL 10 corrected the spelling + changed the chapter slug.
+
+prerequisites:
+  - id: hardware-ram                          # lab: prerequisitesData.hardwareRecommendations
+    title: "Hardware recommendations"
+    severity: warning
+    text: "Size RAM first (most impactful). ~4 GB RAM + 4 GB swap for 10k users/100 groups; ~16 GB RAM + 4 GB swap for 100k users/50k groups. Disable memory ballooning / reserve full RAM on VMs."
+    docs:
+      "8": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#hardware-recomendations_preparing-the-system-for-ipa-server-installation"
+      "9": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#hardware-recomendations_preparing-the-system-for-ipa-server-installation"
+      "10": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/installing_identity_management/preparing-the-system-for-idm-server-installation#hardware-recommendations"
+  - id: ports-firewall                        # lab: prerequisitesData.portsAndFirewallsRequirements
+    title: "Port requirements"
+    severity: warning
+    text: "Required open: 80 (HTTP/OCSP+CRL, redirects to 443), 443, 389 (LDAP+STARTTLS/GSSAPI), 88/464 (Kerberos), 53 (if integrated DNS). Keep 8080/8443 (pki-tomcat) firewalled. 749 only if remote kadmin used."
+    docs:
+      "8": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#port-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
+      "9": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#port-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
+      "10": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/installing_identity_management/preparing-the-system-for-idm-server-installation#port-requirements-for-idm"
+  - id: dns-requirements                      # lab: prerequisitesData.dnsHost
+    title: "DNS host name and DNS requirements"
+    severity: error
+    text: "A tested, correctly configured DNS service must be available (applies to IdM with AND without integrated DNS). DNS underpins LDAP, Kerberos, and AD integration."
+    docs:
+      "8": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#meeting-dns-host-name-and-dns-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
+      "9": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#meeting-dns-host-name-and-dns-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
+      "10": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/installing_identity_management/preparing-the-system-for-idm-server-installation#meeting-dns-host-name-and-dns-requirements-for-idm"
+  - id: time-service                          # lab: prerequisitesData.timeService
+    title: "Time service requirements"
+    severity: error
+    text: "Reliable time sync is required before upgrading."
+    docs:
+      "8": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#assembly_time-service-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
+      "9": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#assembly_time-service-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
+      "10": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/installing_identity_management/preparing-the-system-for-idm-server-installation#time-service-requirements-for-idm"
+  - id: known-issues                          # lab: prerequisitesData.knownIssues
+    title: "Known Issues"
+    severity: info
+    text: "Review target-version known issues before upgrading."
+    docs:
+      pattern: "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/<major>/html/<major>.<minor>_release_notes/known-issues"
+
+# Environment checks (lab step 4). The web lab ASKS these; the interactive CLI prompts
+# them too. A later --detect mode auto-fills them from the box.
+environment_checks:
+  server_configuration:                       # lab: environmentChecksData.configurationOptions
+    question: "Select your IdM server configuration"
+    options:
+      integratedDnsIntegratedCA: "Integrated DNS with integrated CA as root CA"
+      integratedDnsExternalCA: "Integrated DNS with external CA as root CA"
+      integratedDnsWithoutCA: "Integrated DNS without CA"
+      withoutDnsIntegratedCA: "Without integrated DNS with integrated CA as root CA"
+      withoutDnsExternalCA: "Without integrated DNS with external CA as root CA"
+      withoutDNSNoCA: "Without integrated DNS and CA"
+  hsm:                                        # lab: environmentChecksData.keysInHSM
+    question: "Does your IdM server store keys in a Hardware Security Module (HSM)?"
+    feeds: constraint:hsm
+  replicas:                                   # lab: environmentChecksData.usingIdMreplicas
+    question: "Are you using IdM replicas? (Red Hat supports environments with up to 60 replicas.)"
+    support_limit: 60

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Questions & general feedback (GitHub Discussions)
+    url: https://github.com/apeddire-wq/ipa-upgrade-helper/discussions
+    about: Ask questions, share how the tool worked for your upgrade, or suggest ideas.
+  - name: 📝 Quick feedback survey (no GitHub account needed)
+    url: https://docs.google.com/forms/d/e/1FAIpQLSfe9pyfE9_sFpBlu8xN2JEMSVZ4KTnEdt14rX8Lxt_1aJJTRA/viewform
+    about: Short survey for testers — did it work, which RHEL path, and suggestions.

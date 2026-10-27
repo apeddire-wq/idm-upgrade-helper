@@ -1,0 +1,83 @@
+# Upgrade rules / migration model for ipa-upgrade-helper.
+# Extracted from DESIGN.md §4 (source of truth). Verified vs docs.redhat.com
+# "Migrating to IdM" + "Considerations in adopting RHEL" guides.
+meta:
+  data_version: "2026-09-08"     # advisor warns if stale (> N months old)
+  note: "IdM major-version moves are replica-based MIGRATION, not in-place."
+  source: "docs.redhat.com Migrating to IdM + Considerations in adopting RHEL guides"
+
+majors:
+  7:  {latest_minor: "7.9",  status: eol}
+  8:  {latest_minor: "8.10", status: maintenance}    # 8.10 = final RHEL 8 minor
+  9:  {latest_minor: "9.8",  status: full_support}
+  10: {latest_minor: "10.2", status: full_support}   # grows over time
+
+# Full ordered minor lists per major (for source/target selection + interval path).
+minors:
+  8:  ["8.0","8.1","8.2","8.3","8.4","8.5","8.6","8.7","8.8","8.9","8.10"]
+  9:  ["9.0","9.1","9.2","9.3","9.4","9.5","9.6","9.7","9.8"]
+  10: ["10.0","10.1","10.2"]
+
+migration_edges:                 # multi-hop (8->10) derived by pathfinding
+  - from_major: 7
+    to_major: 8
+    method: migrate
+  - from_major: 8
+    to_major: 9
+    method: migrate
+    runbook:
+      - "Add new RHEL 9 IdM replicas to the RHEL 8 topology"
+      - "Transfer CA renewal + CRL roles to a RHEL 9 server"
+      - "Retire/decommission the RHEL 8 servers"
+  - from_major: 9
+    to_major: 10
+    method: migrate
+    prechecks: [ipa-healthcheck]        # docs explicitly require healthcheck first
+    runbook:
+      - "Configure a RHEL 10 IdM server; add as replica to RHEL 9 topology"
+      - "Make the RHEL 10 server the CA renewal server"
+      - "Stop CRL generation on RHEL 9; redirect CRL requests to RHEL 10"
+      - "Decommission RHEL 9 servers"
+
+policy:
+  minor_upgrade: "sequential, no skipping (x.y -> x.y+1)"
+  major_migration: "latest minor of source major -> latest minor of target major"
+  eus: "EUS subscriptions step only to the next EUS minor (e.g. 9.4 EUS -> 9.6 EUS)"
+  downgrade: "NOT supported (forward-only)."
+
+legacy_minor_pairings:           # only when requested target minor < 9.2
+  - {to: "9.0", source_max: "8.6"}
+  - {to: "9.1", source_min: "8.7"}
+
+unsupported_direct:
+  - {from_major: 7, to_major: 9, hops: [8]}
+  - {from_major: 8, to_major: 10, hops: [9]}
+
+global_rules:
+  best_practices:
+    - {id: run-healthcheck, severity: warning,
+       text: "Run ipa-healthcheck before migrating"}
+    - {id: migrate-fast, severity: warning,
+       text: "Migrate all servers quickly; long-running mixed-version topologies risk data corruption"}
+    - {id: stagger-upgrades, severity: warning,
+       text: "Wait >=10 min between upgrading each server so replication can settle"}
+    - {id: disconnected-env, severity: info,      # lab: kcs-7030156
+       text: "Disconnected/air-gapped environments have extra upgrade considerations (KCS 7030156)"}
+  # Warnings that fire only during a cross-major MIGRATION (mixed-version window).
+  migration_warnings:
+    - {id: spake-idp-preauth, severity: warning,  # lab: warningSpakeContent
+       applies_when: "target_major supports SPAKE/IdP pre-auth AND source_major does not",
+       text: "Do NOT enable SPAKE or IdP pre-authentication on the new (target-major) servers while source-major servers remain in the topology - it can break user logins. Migrate all servers first.",
+       refs: ["access.redhat.com/solutions/7053377", "access.redhat.com/solutions/3529911"]}
+    - {id: sid-generation, severity: warning,     # lab: importantSidGeneration
+       applies_when: "any major migration; users lacking SIDs",
+       text: "After migrating a replica, the KDC may refuse TGTs to users without SIDs (login fails). Run: ipa config-mod --enable-sid --add-sids on another replica.",
+       refs: ["access.redhat.com/solutions/7052703"]}
+  constraints:
+    - {id: hsm, severity: error,
+       text: "Cannot migrate a non-HSM install to an HSM-based install (keys not generated on HSM)"}
+
+references:
+  "8": {title: "Upgrading and Downgrading IdM on RHEL 8", url: "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/index"}
+  "9": {title: "Upgrading and Downgrading IdM on RHEL 9", url: "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/installing_identity_management/index"}
+  "10": {title: "Upgrading and Downgrading IdM on RHEL 10", url: "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/installing_identity_management/index"}

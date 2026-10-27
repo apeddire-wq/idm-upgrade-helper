@@ -1,0 +1,201 @@
+# Version-keyed Known Issues catalog for ipa-upgrade-helper.
+# Scope: ONLY the "Identity Management" subsection of each per-minor Release Notes
+# "Known issues" chapter (non-IdM RHEL issues are excluded).
+#
+# MODEL = CUMULATIVE, like the Red Hat release notes themselves: an open issue is
+# re-listed in every version until it is fixed. Each entry is TAGGED with the exact
+# version it STARTED in (first_seen). An issue is "open" at a target version T when:
+#     first_seen <= T  AND  (still_open OR T < resolved_in)
+# resolved_in = the first version where the issue NO LONGER appears on the IdM
+# known-issues page (i.e. fixed by then). still_open: true = still listed as of the
+# latest verified version (10.2).
+#
+# Fields: id, component, feature, first_seen, (resolved_in | still_open), severity,
+#         src (rn = per-minor Release Notes), detect, remediation, optional stream.
+# Verified 2026-10-23 vs docs.redhat.com per-minor Release Notes, RHEL 10.0 -> 10.2.
+# NOTE: these are version-specific (tagged by first_seen), NOT a flat cumulative dump.
+
+# Single section-level release-notes link (one per section, NOT per entry), keyed by
+# target MAJOR (slugs/anchors drift across majors). Placeholders: <major>, <version>
+# (full target x.y). Only majors with a byte-verified pattern are listed; a target
+# whose major is absent here simply prints no link. Verified for RHEL 10.x 2026-10-23.
+doc:
+  "10": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/<major>/html/<version>_release_notes/known-issues#known-issues-identity-management"
+  "9": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/<major>/html/<version>_release_notes/known-issues#known-issues-identity-management"
+  "9.0": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/9.0_release_notes/known-issues#known-issue_identity-management"
+  "9.1": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/9.1_release_notes/known-issues#known-issue_identity-management"
+
+known_issues:
+
+  - {id: ki-ntlmssp-fips-trust, component: idm, first_seen: "9.1", still_open: true,
+     severity: warning, src: rn,
+     feature: "IdM in FIPS mode does not support using the NTLMSSP protocol to establish a two-way cross-forest trust",
+     detect: "FIPS-enabled IdM establishing a two-way trust with Active Directory",
+     remediation: "Establish a one-way trust, or do not run in FIPS mode for this topology (NTLMSSP is not FIPS-compliant)"}
+
+  - {id: ki-rhel7-client-ems-fips, component: idm, first_seen: "9.2", still_open: true,
+     severity: warning, src: rn,
+     feature: "Installing a RHEL 7 IdM client with a RHEL 9.2+ or RHEL 10 IdM server in FIPS mode fails due to EMS enforcement",
+     detect: "enrolling a RHEL 7.9 client against a FIPS RHEL 9.2+/RHEL 10 IdM server",
+     remediation: "RHEL 7 OpenSSL lacks the mandatory TLS Extended Master Secret extension; upgrade the client or avoid FIPS for this case"}
+
+  - {id: ki-dnssec-broken, component: idm-dns, first_seen: "10.0", resolved_in: "10.1",
+     severity: warning, src: rn,
+     feature: "DNSSEC does not function correctly in IdM on RHEL 10.0 [RHEL-30556]",
+     detect: "IdM integrated DNS with DNSSEC enabled AND target == 10.0",
+     remediation: "Root cause: openssl-pkcs11 engine removed for pkcs11-provider. If you rely on DNSSEC, target 10.1+ (absent from the 10.1 known-issues list)"}
+
+  - {id: ki-adcli-keytab-renewal, component: sssd, first_seen: "10.0", resolved_in: "10.2",
+     severity: warning, src: rn,
+     feature: "Automatic host keytab renewal via adcli run by SSSD is failing",
+     detect: "SSSD-managed hosts whose machine account keytab is due for rotation",
+     remediation: "Renew the host keytab manually if rotation fails; fixed by RHEL 10.2"}
+
+  - {id: ki-dsctl-wrong-dbtype, component: 389-ds, first_seen: "10.0", resolved_in: "10.1",
+     severity: info, src: rn,
+     feature: "dsctl healthcheck can report a wrong database type",
+     detect: "running dsctl healthcheck on Directory Server",
+     remediation: "Cosmetic mis-report; verify the backend with the cn=config nsslapd-backend-implement value. Fixed by RHEL 10.1"}
+
+  - {id: ki-bdb-lmdb-migration-msg, component: 389-ds, first_seen: "10.0", resolved_in: "10.2",
+     severity: info, src: rn,
+     feature: "An error message is displayed during migration from BDB to LMDB",
+     detect: "migrating a Directory Server instance from the BDB backend to LMDB",
+     remediation: "The spurious error does not indicate a real failure; verify the migration completed. Fixed by RHEL 10.2"}
+
+  - {id: ki-ldapmodify-cnconfig, component: 389-ds, first_seen: "10.0", still_open: true,
+     severity: info, src: rn,
+     feature: "ldapmodify does not delete a single specific value from any attribute in cn=config",
+     detect: "attempting to delete one specific value of a multi-valued cn=config attribute",
+     remediation: "Delete-and-re-add the remaining values, or restart the server after the change may be required"}
+
+  - {id: ki-ipa-migrate-sshkeys, component: idm, first_seen: "9.8", still_open: true,
+     severity: warning, src: rn,
+     feature: "ipa-migrate does not migrate SSH public keys",
+     detect: "using ipa-migrate to move data between IdM deployments",
+     remediation: "Re-import user/host SSH public keys manually after an ipa-migrate run"}
+
+  # ----------------------------------------------------------------------------- #
+  # RHEL 9.x-origin IdM known issues (stream: rhel9). Verified minor-by-minor
+  # 9.0->9.8 (2026-10-25); first_seen = first appearance in the IdM known-issues
+  # subsection, resolved_in = first minor where it no longer appears.
+  # NOTE: ki-ntlmssp-fips-trust (9.1), ki-rhel7-client-ems-fips (9.2) and
+  # ki-ipa-migrate-sshkeys (9.8) also span the rhel10 stream and are the un-streamed
+  # entries above (do not duplicate them here).
+  # ----------------------------------------------------------------------------- #
+
+  # --- first_seen 9.0 ---
+  - {id: ki-default-sha1-subpolicy, component: kerberos, first_seen: "9.0", still_open: true, stream: rhel9,
+     severity: warning, src: rn,
+     feature: "The DEFAULT:SHA1 subpolicy has to be set on RHEL 9 clients for PKINIT to work against AD KDCs",
+     detect: "PKINIT against AD KDCs that still sign CMS with SHA-1",
+     remediation: "update-crypto-policies --set DEFAULT:SHA1 on affected RHEL 9 clients (AD still signs with SHA-1)"}
+  - {id: ki-pkinit-rhel9-vs-nonrhel9, component: kerberos, first_seen: "9.0", still_open: true, stream: rhel9,
+     feature: "PKINIT authentication fails if a RHEL 9 Kerberos agent communicates with a non-RHEL-9, non-AD agent",
+     detect: "mixed-version Kerberos realm using PKINIT",
+     remediation: "Set crypto-policy to DEFAULT:SHA1 or update the other agent to sign with SHA-256"}
+  - {id: ki-sssd-1500-members, component: sssd, first_seen: "9.0", resolved_in: "9.6", stream: rhel9,
+     severity: info, src: rn,
+     feature: "SSSD retrieves an incomplete list of members if the group size exceeds 1500 members",
+     detect: "AD groups with >1500 members via SSSD",
+     remediation: "Raise the AD MaxValRange policy above the largest group size"}
+  - {id: ki-ldap-id-use-start-tls-9, component: sssd, first_seen: "9.0", resolved_in: "9.5", stream: rhel9,
+     severity: info, src: rn,
+     feature: "Potential risk when using the default value for the ldap_id_use_start_tls option",
+     detect: "SSSD ldap provider using ldap:// without TLS",
+     remediation: "Set ldap_id_use_start_tls=true (MITM risk). NOTE: moved to the SSSD release-notes subsection at 9.5 (out of IdM scope from 9.5)"}
+  - {id: ki-ds-referral-crash, component: 389-ds, first_seen: "9.0", resolved_in: "9.3", stream: rhel9,
+     severity: warning, src: rn,
+     feature: "Directory Server terminates unexpectedly when started in referral mode",
+     detect: "ns-slapd started with the refer option (global referral mode)",
+     remediation: "Avoid global referral mode; fixed by RHEL 9.3"}
+  - {id: ki-ds-referral-suffix, component: 389-ds, first_seen: "9.0", resolved_in: "9.3", stream: rhel9,
+     severity: info, src: rn,
+     feature: "Configuring a referral for a suffix fails in Directory Server",
+     detect: "setting a back-end referral state",
+     remediation: "Set nsslapd-referral manually first; fixed by RHEL 9.3"}
+  - {id: ki-dsconf-entryuuid-fixup, component: 389-ds, first_seen: "9.0", resolved_in: "9.3", stream: rhel9,
+     severity: info, src: rn,
+     feature: "The dsconf utility has no option to create fix-up tasks for the entryUUID plug-in",
+     detect: "entries missing entryUUID attributes",
+     remediation: "Create the fix-up task manually via ldapadd; fixed by RHEL 9.3"}
+
+  # --- first_seen 9.1 ---
+  - {id: ki-mit-no-ecc-pkinit, component: kerberos, first_seen: "9.1", resolved_in: "9.5", stream: rhel9,
+     severity: info, src: rn,
+     feature: "MIT Kerberos does not support ECC certificates for PKINIT",
+     detect: "PKINIT with elliptic-curve certificates",
+     remediation: "Use RSA certificates for PKINIT; fixed by RHEL 9.5"}
+  - {id: ki-heimdal-client-vs-rhel9-kdc, component: kerberos, first_seen: "9.1", still_open: true, stream: rhel9,
+     severity: info, src: rn,
+     feature: "Heimdal client fails to authenticate a user using PKINIT against a RHEL 9 KDC",
+     detect: "Heimdal client (MODP Group 2) vs RHEL 9 MIT KDC (Groups 14/16)",
+     remediation: "Set pkinit_dh_min_bits = 1759 on the Heimdal client"}
+  - {id: ki-idm-ad-cross-realm-tgs, component: idm, first_seen: "9.1", resolved_in: "9.3", stream: rhel9,
+     severity: warning, src: rn,
+     feature: "IdM to AD cross-realm TGS requests fail",
+     detect: "two-way AD trust; PAC signed with AES SHA-2 HMAC",
+     remediation: "AD does not support the AES SHA-2 PAC checksum; fixed by RHEL 9.3"}
+  - {id: ki-idm-vault-fips, component: idm, first_seen: "9.1", resolved_in: "9.4", stream: rhel9,
+     severity: warning, src: rn,
+     feature: "IdM Vault encryption and decryption fails in FIPS mode",
+     detect: "IdM Vault operations under FIPS",
+     remediation: "RSA-PKCS1v15 padding is blocked in FIPS; fixed by RHEL 9.4"}
+  - {id: ki-migrated-sids-9, component: idm, first_seen: "9.1", resolved_in: "9.7", stream: rhel9,
+     severity: warning, src: rn,
+     feature: "Migrated IdM users might be unable to log in due to mismatching domain SIDs",
+     detect: "users migrated with ipa migrate-ds",
+     remediation: "Regenerate SIDs (ipa config-mod --enable-sid --add-sids); fixed by RHEL 9.7"}
+
+  # --- first_seen 9.2 ---
+  - {id: ki-users-without-sids, component: idm, first_seen: "9.2", resolved_in: "9.5", stream: rhel9,
+     severity: warning, src: rn,
+     feature: "Users without SIDs cannot log in to IdM after an upgrade",
+     detect: "post-upgrade users lacking Security Identifiers",
+     remediation: "ipa config-mod --enable-sid --add-sids; fixed by RHEL 9.5"}
+  - {id: ki-mit-krb5-ad-tgt-enctypes, component: kerberos, first_seen: "9.2", resolved_in: "9.5", stream: rhel9,
+     severity: info, src: rn,
+     feature: "MIT krb5 user fails to obtain an AD TGT because of incompatible encryption types generating the user PAC",
+     detect: "cross-realm MIT->AD with AES HMAC-SHA2 PAC checksum",
+     remediation: "Set disable_pac=true for the MIT realm; fixed by RHEL 9.5"}
+  - {id: ki-rhel9-fips-replica-vs-86, component: idm, first_seen: "9.2", still_open: true, stream: rhel9,
+     severity: warning, src: rn,
+     feature: "Adding a RHEL 9 replica in FIPS mode to an IdM deployment (FIPS) initialized with RHEL 8.6 or earlier fails",
+     detect: "new RHEL 9 FIPS replica joining an 8.6-or-earlier-initialized FIPS deployment",
+     remediation: "No common enctypes (older uses AES HMAC-SHA1, not SHA2); re-key or upgrade the older servers first"}
+  - {id: ki-sssd-dns-names, component: sssd, first_seen: "9.2", resolved_in: "9.5", stream: rhel9,
+     severity: info, src: rn,
+     feature: "SSSD does not register DNS names properly on the first attempt",
+     detect: "dynamic DNS registration failing on first attempt",
+     remediation: "Set dns_resolver_use_search_list. NOTE: moved to the SSSD release-notes subsection at 9.5 (out of IdM scope from 9.5)"}
+
+  # --- first_seen 9.3 ---
+  - {id: ki-nsslapd-numlisteners, component: 389-ds, first_seen: "9.3", resolved_in: "9.4", stream: rhel9,
+     severity: warning, src: rn,
+     feature: "When the nsslapd-numlisteners attribute value is more than 2, Directory Server fails",
+     detect: "nsslapd-numlisteners > 2",
+     remediation: "Keep nsslapd-numlisteners <= 2; fixed by RHEL 9.4"}
+  - {id: ki-rhel-windows-interop-workaround, component: kerberos, first_seen: "9.3", resolved_in: "9.4", stream: rhel9,
+     severity: info, src: rn,
+     feature: "A workaround to preserve RHEL-Windows interoperability in RHEL 9 is now available",
+     detect: "PKINIT against Windows KDCs (Windows meets only FIPS-140-2)",
+     remediation: "FIPS exception allowing SHA-1 PKINIT verification for Windows; folded in by RHEL 9.4"}
+
+  # --- first_seen 9.4 ---
+  - {id: ki-online-backup-automembership-deadlock, component: 389-ds, first_seen: "9.4", still_open: true, stream: rhel9,
+     severity: warning, src: rn,
+     feature: "The online backup and the online automembership rebuild tasks can acquire two locks resulting in a deadlock",
+     detect: "running online backup and automembership rebuild in parallel",
+     remediation: "Do not launch the two tasks simultaneously"}
+
+  # --- first_seen 9.5 ---
+  - {id: ki-fips-ad-support-subpolicy, component: idm, first_seen: "9.5", still_open: true, stream: rhel9,
+     severity: warning, src: rn,
+     feature: "FIPS support for AD trust requires the AD-SUPPORT crypto subpolicy",
+     detect: "installing IdM with an AD trust in FIPS mode",
+     remediation: "update-crypto-policies --set FIPS:AD-SUPPORT before installing IdM (AD AES SHA-1 HMAC enctypes are disallowed by default in FIPS)"}
+  - {id: ki-dsconf-config-replace-multivalued, component: 389-ds, first_seen: "9.5", resolved_in: "9.6", stream: rhel9,
+     severity: info, src: rn,
+     feature: "dsconf config replace cannot handle multivalued attributes",
+     detect: "setting a multivalued cn=config attribute (e.g. nsslapd-haproxy-trusted-ip) via dsconf config replace",
+     remediation: "Use ldapmodify for multivalued attributes; fixed by RHEL 9.6"}

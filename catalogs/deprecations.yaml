@@ -1,0 +1,245 @@
+# Version-keyed deprecated / removed / changed catalog for ipa-upgrade-helper.
+# Extracted from DESIGN.md §5.1 (source of truth; full provenance/audit notes live there).
+# Each entry pins the exact RHEL x.y where a feature was deprecated / removed / changed
+# (verified 2026-09-08 vs primary docs.redhat.com per-minor Release Notes + Considerations
+# guides, RHEL 8.0 -> 10.2). The MATCHER selects every entry whose
+# deprecated_in / removed_in / changed_in lands in the half-open interval
+# (current_version, target_version] along the resolved path.
+# src legend: rn = per-minor Release Notes; cons8/9/10 = Considerations-in-adopting guide;
+#             lab = only attested by the web lab (not independently reconfirmed).
+
+deprecations:
+
+  # --- IdM core / auth stack -----------------------------------
+  - {id: authconfig, component: idm, removed_in: "8.0", severity: info, src: rn,
+     feature: "authconfig tool (replaced by authselect)",
+     detect: "scripts calling authconfig; rpm -q authconfig",
+     remediation: "Use authselect"}
+  - {id: python-kerberos, component: idm, removed_in: "8.0", severity: info, src: rn, lab: pythonGssapiReplacement,
+     feature: "Python Kerberos packages (python-krbV/python-kerberos) replaced by python-gssapi",
+     detect: "custom code importing python-krbV / python-kerberos",
+     remediation: "Port to python-gssapi / python-requests-gssapi"}
+  - {id: nis-idm-netgroups, component: idm, deprecated_in: "8.2", severity: warning, src: lab,
+     feature: "NIS domains and netgroups in IdM",
+     detect: "ipa nisdomain-find / netgroup usage",
+     remediation: "Migrate to IdM netgroups + SSSD (NIS server emulator removed in 10.0)"}
+  - {id: nis-client-pkgs, component: idm, removed_in: "9.0", severity: warning, src: cons9,
+     feature: "NIS client packages (nss_nis, yp-tools, ypbind, ypserv)",
+     detect: "rpm -q ypbind nss_nis; nis in nsswitch.conf",
+     remediation: "Use IdM + SSSD (cons9 only; exact minor unconfirmed)"}
+  - {id: nis-server-emulator, component: idm, removed_in: "10.0", severity: error, src: rn, lab: nisServerRemoved,
+     feature: "IdM NIS server emulator (ipa-nis-manage / slapi-nis NIS)",
+     detect: "ipa-nis-manage status; NIS listener enabled",
+     remediation: "IdM no longer provides NIS; migrate clients off NIS before RHEL 10"}
+  - {id: nss-pam-ldapd, component: idm, removed_in: "9.0", severity: warning, src: cons9, lab: nssPamLdapdRemoved,
+     feature: "nss-pam-ldapd (nslcd)",
+     detect: "rpm -q nss-pam-ldapd; nslcd in nsswitch.conf",
+     remediation: "Use SSSD ldap provider"}
+  - {id: gssntlmssp, component: idm, removed_in: "9.0", severity: warning, src: cons9, lab: gssntlmsspPackageRemoved,
+     feature: "gssntlmssp (NTLM GSSAPI)",
+     detect: "rpm -q gssntlmssp",
+     remediation: "NTLM is insecure; use Kerberos"}
+  - {id: custodia, component: idm, removed_in: "9.0", severity: info, src: cons9, lab: custodiaPackageRemoved,
+     feature: "custodia package (integrated into IdM)",
+     detect: "informational", remediation: "No action; folded into ipa"}
+  - {id: openssh-ldap, component: idm, deprecated_in: "8.3", removed_in: "9.0", severity: warning, src: rn/cons9,
+     lab: [opensshLdap, opensshLdapPackageRemoved],
+     feature: "openssh-ldap subpackage",
+     detect: "rpm -q openssh-ldap",
+     remediation: "Use SSSD sss_ssh_authorizedkeys helper"}
+  - {id: ad-winsync, component: idm, deprecated_in: "8.5", severity: warning, src: rn, lab: adIntegrationWinSync,
+     feature: "Indirect AD integration via WinSync",
+     detect: "winsync replication agreement present",
+     remediation: "Migrate to a cross-forest AD trust"}
+  - {id: ad-trust-ws2012r2, component: idm, removed_in: "10.2", severity: warning, src: rn,
+     feature: "IdM no longer supports configuring an Active Directory trust with Windows Server 2012 R2",
+     detect: "trusted AD DCs running WS2012R2",
+     remediation: "Upgrade AD DCs (Red Hat aligns supported versions with Microsoft support lifecycles)"}
+  - {id: pam_console, component: idm, deprecated_in: "9.5", removed_in: "10.0", severity: info, src: rn,
+     lab: [pamConsole, pamConsoleRemoved],
+     feature: "pam_console PAM module",
+     detect: "pam_console referenced in /etc/pam.d",
+     remediation: "Use systemd-logind"}
+
+  # --- SSSD ----------------------------------------------------
+  - {id: sssd-ldap-profiles, component: sssd, deprecated_in: "8.1", severity: info, src: lab,
+     feature: "LDAP-based profiles in SSSD",
+     detect: "ldap profile config in sssd.conf", remediation: "Marginal; review usage"}
+  - {id: sssd-implicit-files-provider, component: sssd, changed_in: "8.8", severity: info, src: rn,
+     lab: [sssdImplicitFiles, sssdFilesProvider],
+     feature: "The SSSD implicit files provider domain is disabled by default",
+     detect: "reliance on implicit files domain (e.g. smartcard local users)",
+     remediation: "Explicitly configure a files domain where needed"}
+  - {id: sssd-implicit-files-provider-rhel9, component: sssd, changed_in: "9.0", stream: rhel9, severity: info, src: rn,
+     lab: [sssdImplicitFiles, sssdFilesProvider],
+     feature: "The SSSD implicit files provider domain is disabled by default",
+     detect: "reliance on implicit files domain (e.g. smartcard local users)",
+     remediation: "Explicitly configure a files domain where needed",
+     note: "RHEL 9 stream occurrence (re-verified 2026-10-25: listed under IdM in 9.0-9.6 deprecated). The changed_in 8.8 entry above covers the 8-stream; this covers 9.x so an 8.10->9 migration surfaces it"}
+  - {id: sssd-files-provider, component: sssd, deprecated_in: "9.2", removed_in: "10.0", severity: warning, src: rn, lab: sssdFiles,
+     feature: "SSSD files provider",
+     detect: "id_provider=files in sssd.conf",
+     remediation: "Use proxy provider / authselect local (removed in 10.0)"}
+  - {id: sssd-enumeration, component: sssd, deprecated_in: "9.4", removed_in: "10.0", severity: warning, src: rn, lab: enumeration,
+     feature: "SSSD enumeration (getent listing all users/groups) for AD & IdM",
+     detect: "enumerate = true in sssd.conf domain sections",
+     remediation: "Disable enumeration; query explicitly (removed for AD/IdM in 10)"}
+  - {id: libsss-simpleifp, component: sssd, deprecated_in: "9.4", removed_in: "10.0", severity: info, src: rn, lab: libsssSimpleifp,
+     feature: "libsss_simpleifp subpackage (InfoPipe simple C API)",
+     detect: "rpm -q libsss_simpleifp; callers of libsss_simpleifp.so",
+     remediation: "Migrate off the simple InfoPipe API"}
+  - {id: sssd-libwbclient, component: sssd, deprecated_in: "8.4", removed_in: "8.5", severity: info, src: rn, lab: sssdLibwbClient,
+     feature: "SSSD implementation of libwbclient",
+     detect: "informational; Samba provides libwbclient",
+     remediation: "Use the Samba-provided libwbclient"}
+  - {id: sssd-ad-allow-remote-domain-local-groups, component: sssd, deprecated_in: "9.6", removed_in: "10.0", severity: info, src: rn,
+     feature: "ad_allow_remote_domain_local_groups sssd.conf option",
+     detect: "grep ad_allow_remote_domain_local_groups sssd.conf",
+     remediation: "Option removed in 10.0"}
+  - {id: sssd-reconnection-retries, component: sssd, removed_in: "10.0", severity: info, src: rn,
+     feature: "reconnection_retries sssd.conf option",
+     detect: "grep reconnection_retries sssd.conf", remediation: "Option removed"}
+  - {id: sssd-ipa-enable-dns-sites, component: sssd, removed_in: "10.2", severity: info, src: rn,
+     feature: "ipa_enable_dns_sites sssd.conf option (was non-functional)",
+     detect: "grep ipa_enable_dns_sites sssd.conf", remediation: "Option removed"}
+  - {id: sssd-secrets, component: sssd, removed_in: "8.0", severity: info, src: cons8, lab: sssdSecretsRemoved,
+     feature: "sssd-secrets (Custodia-backed secrets responder)",
+     detect: "rpm -q sssd-secrets; secrets responder in sssd.conf",
+     remediation: "Use IdM Vault (cons8 only; exact minor unconfirmed)"}
+
+  # --- Samba ---------------------------------------------------
+  - {id: samba-smb1, component: samba, deprecated_in: "8.2", severity: warning, src: rn, lab: [smb1Samba, samba1Protocol],
+     feature: "SMB1 protocol in Samba (upstream Samba 4.11)",
+     detect: "client/server min protocol < SMB2 in smb.conf",
+     remediation: "Use SMB2+ (SMB1 off by default)"}
+  - {id: samba-pdc-bdc, component: samba, deprecated_in: "8.4", severity: info, src: rn, lab: sambaAsPDC,
+     feature: "Samba as NT4-style PDC/BDC",
+     detect: "NT4 domain-controller role in smb.conf",
+     remediation: "Migrate Linux users to IdM; NT4 domains are EOL"}
+  - {id: ctdb-standalone, component: samba, deprecated_in: "8.4", severity: info, src: rn, lab: ctdbStandalone,
+     feature: "Standalone use of the ctdb service",
+     detect: "ctdb outside pacemaker/GlusterFS/GFS2",
+     remediation: "Supported only as a pacemaker resource on GlusterFS/GFS2"}
+  - {id: samba-smb-python-bindings, component: samba, deprecated_in: "8.1", severity: info, src: lab,
+     feature: "Samba SMB client Python bindings",
+     detect: "code importing samba SMB client bindings", remediation: "Marginal; review tooling"}
+
+  # --- Kerberos / crypto (auth-relevant) -----------------------
+  - {id: des-3des, component: kerberos, deprecated_in: "7", removed_in: "8.3", severity: warning, src: rn, lab: des3Encryption,
+     feature: "single-DES and 3DES Kerberos enctypes",
+     detect: "DES/3DES enctypes in krb5.conf / principal keys",
+     remediation: "Use AES enctypes"}
+  - {id: rc4-hmac, component: kerberos, deprecated_in: "8.3", severity: warning, src: rn,
+     feature: "RC4 (arcfour-hmac) Kerberos cipher (AD-trust default enctype)",
+     detect: "RC4 enctypes; AD trust relying on RC4",
+     remediation: "Enable AES on AD side; AD-SUPPORT crypto subpolicy re-enables RC4 if needed"}
+  - {id: cyrus-sasl-ntlm-krb4, component: kerberos, deprecated_in: "8.9", severity: info, src: rn,
+     feature: "NTLM and Kerberos 4 mechanisms in Cyrus SASL",
+     detect: "SASL NTLM/KRB4 mechanism use", remediation: "Marginal; use GSSAPI/Kerberos 5"}
+  - {id: kerberos-rsa-pkinit, component: kerberos, removed_in: "10.0", severity: warning, src: rn, lab: rsaPkinitRemoved,
+     feature: "RSA method in MIT Kerberos PKINIT (-X flag_RSA_PROTOCOL)",
+     detect: "kinit workflows relying on RSA PKINIT",
+     remediation: "Diffie-Hellman is the default PKINIT mechanism (Marvin attack)"}
+  - {id: fips-aes-sha1-replica-constraint, component: kerberos, changed_in: "9.0", severity: error, src: cons9,
+     feature: "RHEL 9 FIPS replica cannot join a FIPS deployment first installed on <=8.6",
+     detect: "FIPS mode enabled AND deployment's first server on 8.6 or earlier",
+     remediation: "Update the source deployment past 8.6 (AES HMAC-SHA2) before adding a RHEL 9 FIPS replica"}
+  - {id: crypto-hmac-sha1-fips, component: crypto, deprecated_in: "10.1", severity: info, src: rn,
+     feature: "HMAC-SHA-1 deprecated in FIPS mode",
+     detect: "reliance on HMAC-SHA-1 under FIPS", remediation: "Plan migration to SHA-2 MACs"}
+  - {id: openssl-legacy-algos, component: crypto, deprecated_in: "9.0", severity: info, src: rn, lab: opensslDeprecatesAlgorithms,
+     feature: "OpenSSL legacy-provider algos (MD2/MD4/MDC2/Whirlpool/RIPEMD160/Blowfish/CAST/DES/IDEA/RC2/RC4/RC5/SEED/PBKDF1)",
+     detect: "config/code depending on these algorithms",
+     remediation: "Migrate to modern algos; legacy provider is opt-in"}
+
+  # --- OpenLDAP ------------------------------------------------
+  - {id: openldap-server, component: openldap, removed_in: "8.0", severity: info, src: lab,
+     feature: "OpenLDAP server (slapd) - not shipped as a base RHEL 8 package",
+     detect: "rpm -q openldap-servers",
+     remediation: "IdM uses 389-ds; not applicable to IdM servers"}
+  - {id: openldap-nss-db, component: openldap, removed_in: "8.0", severity: warning, src: rn, lab: nssNotSupportedOpenLDAP,
+     feature: "NSS cert/key databases in OpenLDAP client tools",
+     detect: "TLS_CACERTDIR -> NSS db in ldap.conf",
+     remediation: "Use PEM (OpenSSL) files"}
+  - {id: openldap-h-p-opts, component: openldap, deprecated_in: "9.1", severity: info, src: rn, lab: openLdapOptions,
+     feature: "-h and -p options in OpenLDAP client utilities",
+     detect: "scripts invoking ldap* with -h/-p", remediation: "Use -H ldapuri"}
+
+  # --- DNS / DNSSEC / BIND ------------------------------------
+  - {id: opendnssec-sha1, component: dns, deprecated_in: "9.0", severity: info, src: rn, lab: sha1OpenDNSSec,
+     feature: "SHA-1 in OpenDNSSec",
+     detect: "SHA-1 signing in OpenDNSSec (IdM-integrated only)",
+     remediation: "Use a stronger algorithm"}
+  - {id: dnssec-enable-opt, component: dns, deprecated_in: "9.0", removed_in: "10.0", severity: info, src: rn/cons10, lab: dnssecEnable,
+     feature: "dnssec-enable: no; in /etc/named/ipa-options-ext.conf",
+     detect: "grep dnssec-enable /etc/named/ipa-options-ext.conf",
+     remediation: "Remove; DNSSEC on by default (dnssec-validation still valid). Option removed in 10.0"}
+  - {id: bind-pkcs11, component: dns, removed_in: "9.0", severity: info, src: cons9,
+     feature: "bind-pkcs11 / bind-pkcs11-utils",
+     detect: "rpm -q bind-pkcs11",
+     remediation: "named uses OpenSSL for DNSSEC; use opensc pkcs11-tool"}
+  - {id: bind-auto-dnssec, component: dns, deprecated_in: "9.7", severity: info, src: rn,
+     feature: "BIND auto-dnssec parameter",
+     detect: "auto-dnssec in named config", remediation: "Use dnssec-policy"}
+  - {id: openssl-pkcs11, component: crypto, deprecated_in: "9.4", removed_in: "10.0", severity: warning, src: rn,
+     feature: "openssl-pkcs11 engine (IdM DNSSEC / PKCS#11 key handling)",
+     detect: "IdM integrated DNS with DNSSEC; HSM via openssl-pkcs11 engine",
+     remediation: "Root cause of 10.0 IdM DNSSEC breakage (RHEL-30556); use pkcs11-provider. See known_issues"}
+
+  # --- 389-ds / Directory Server ------------------------------
+  - {id: ds-bdb, component: 389-ds, deprecated_in: "9.0", removed_in: "10.0", severity: error, src: rn/cons10,
+     lab: [bdbBackendDeprecated, bdbNoLongerSupported],
+     feature: "389-ds Berkeley DB (BDB) backend",
+     detect: "nsslapd-backend-implement = bdb (not mdb)",
+     remediation: "RHEL 10 is LMDB-only; migrate DB to LMDB before/with migration"}
+  - {id: ds-changelogcompactdb-interval, component: 389-ds, removed_in: "9.0", severity: info, src: cons9,
+     lab: nsslapdChangelogcompactdbIntervalRemoved,
+     feature: "nsslapd-changelogcompactdb-interval",
+     detect: "grep in dse.ldif", remediation: "Changelog folded into main DB; remove references"}
+  - {id: ds-conntablesize, component: 389-ds, removed_in: "9.3", severity: info, src: rn,
+     lab: [nsslapdConntablesize, nsslapdConnTablesizeRemoved],
+     feature: "nsslapd-conntablesize",
+     detect: "grep nsslapd-conntablesize in dse.ldif",
+     remediation: "Use nsslapd-maxdescriptors / nsslapd-reservedescriptors"}
+  - {id: ds-idlistscanlimit, component: 389-ds, deprecated_in: "9.2", severity: info, src: rn, lab: nsslapdIdlistscanlimit,
+     feature: "nsslapd-idlistscanlimit (default now 2147483646)",
+     detect: "grep in dse.ldif", remediation: "Deprecated with filter-reordering optimization"}
+  - {id: ds-ldapimaprootdn, component: 389-ds, deprecated_in: "9.3", severity: info, src: rn, lab: nsslapdLdapimaprootdn,
+     feature: "nsslapd-ldapimaprootdn",
+     detect: "grep in dse.ldif", remediation: "Keep in sync with nsslapd-rootdn or autobind breaks"}
+  - {id: ds-logging-hr-timestamps, component: 389-ds, removed_in: "9.6", severity: info, src: lab,
+     lab: nsslapdLoggingHrTimestampsRemoved,
+     feature: "nsslapd-logging-hr-timestamps-enabled",
+     detect: "grep in dse.ldif", remediation: "High-res timestamps always on; remove references"}
+  - {id: ds-subtree-rename-switch, component: 389-ds, deprecated_in: "9.7", removed_in: "10.1", severity: info, src: rn,
+     lab: nsslapdSubtreeRenameSwitch,
+     feature: "nsslapd-subtree-rename-switch",
+     detect: "grep in dse.ldif", remediation: "Use an ACI to prevent sub-tree moves"}
+  - {id: ds-referral-mode, component: 389-ds, removed_in: "10.1", severity: info, src: rn, lab: referralMode389,
+     feature: "Directory Server referral (start) mode",
+     detect: "server started in referral mode",
+     remediation: "Removed; nsslapd-referral/referralmode attrs still usable"}
+
+  # --- FreeRADIUS ---------------------------------------------
+  - {id: freeradius-modules, component: freeradius, deprecated_in: "8.6", removed_in: "9.0", severity: info, src: rn/cons9,
+     lab: [freeRadiusLimited, freeRadiusLimitedSupport],
+     feature: "FreeRADIUS SQL connectors, Perl module, REST module",
+     detect: "rlm_sql_* / rlm_perl / rlm_rest configured",
+     remediation: "Only PAM/base auth modules supported"}
+
+  # --- Certificate System / dogtag / certmonger ---------------
+  - {id: certmonger-dogtag-reuse, component: certmonger, deprecated_in: "8.2", severity: info, src: lab,
+     feature: "dogtag-ipa-ca-renew-agent-reuse certmonger CA helper",
+     detect: "getcert list -> renew-agent-reuse helper",
+     remediation: "Use dogtag-ipa-ca-renew-agent[-unwrap]"}
+  - {id: rsnv3-default, component: dogtag, changed_in: "10.0", severity: info, src: cons10,
+     feature: "RSNv3 random serial numbers + expired-cert auto-removal default ON (new replicas)",
+     detect: "informational (new RHEL 10 replicas)",
+     remediation: "New replicas enable RSNv3 + auto-remove expired certs (30d retention)"}
+  - {id: rhel10-dropped-pkgs, component: idm, removed_in: "10.0", severity: info, src: rn, lab: otherRemovedRHEL10,
+     feature: "compat-hesiod, fontawesome-fonts, libnsl2, python3-netifaces",
+     detect: "rpm -q on the above",
+     remediation: "fontawesome4-fonts / python-ifaddr replacements where applicable"}
+
+# NOTE: known_issues moved to the dedicated catalogs/known-issues.yaml (cumulative,
+# start-version-tagged model). The old single `affects`-keyed entry lives there now.

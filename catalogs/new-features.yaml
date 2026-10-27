@@ -1,0 +1,260 @@
+# Version-keyed New Features and Enhancements catalog for ipa-upgrade-helper.
+# Scope: ONLY the "Identity Management" subsection of each per-minor Release Notes
+# "New features and enhancements" chapter (non-IdM RHEL features excluded).
+#
+# MODEL = POINT-IN-TIME per version: each entry is tagged with added_in, the version
+# whose release notes announced it. The matcher shows features gained along the chosen
+# upgrade path, i.e. added_in in the half-open interval (current, target]. A feature
+# that the docs re-announce in a later version (e.g. HSM in both 10.0 and 10.1) is
+# listed once per version, mirroring the Red Hat release notes.
+#
+# Fields: id, component, feature, added_in, src (rn = Release Notes), optional note.
+# Verified 2026-10-23 vs docs.redhat.com per-minor Release Notes.
+# NOTE: these are version-specific (tagged by added_in), NOT a flat cumulative dump.
+# RHEL 10.2 has no IdM "New features and enhancements" section (nil).
+
+# Single section-level release-notes link (one per section, NOT per entry), keyed by
+# target MAJOR (slugs/anchors drift across majors). Placeholders: <major>, <version>
+# (full target x.y). Only majors with a byte-verified pattern are listed; a target
+# whose major is absent here simply prints no link. Verified for RHEL 10.x 2026-10-23.
+doc:
+  "10": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/<major>/html/<version>_release_notes/new-features-and-enhancements#new-features-and-enhancements-identity-management"
+  "9": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/<major>/html/<version>_release_notes/new-features#new-features-identity-management"
+  "9.0": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/9.0_release_notes/new-features#enhancement_identity-management"
+  "9.1": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/9.1_release_notes/new-features#enhancement_identity-management"
+
+new_features:
+
+  # --- RHEL 10.0 -------------------------------------------------
+  - {id: nf-jwcrypto-156-100, component: idm, added_in: "10.0", src: rn,
+     feature: "python-jwcrypto 1.5.6 (security fix for JWE token decompression DoS)"}
+  - {id: nf-ansible-freeipa-1145, component: idm, added_in: "10.0", src: rn,
+     feature: "ansible-freeipa 1.14.5 (module_defaults, multi-sudo-rule management, external-member removal fix)"}
+  - {id: nf-ipa-idrange-fix, component: idm, added_in: "10.0", src: rn,
+     feature: "New ipa-idrange-fix tool to analyze and propose fixes for IdM ID range inconsistencies"}
+  - {id: nf-expired-cert-autoremove, component: idm-cert, added_in: "10.0", src: rn,
+     feature: "Automated removal of expired certificates is enabled by default (30-day retention on new replicas)"}
+  - {id: nf-pyasn1-061, component: idm, added_in: "10.0", src: rn,
+     feature: "python-pyasn1 0.6.1 (Python 3.13 support)"}
+  - {id: nf-ldap-starttls-default, component: sssd, added_in: "10.0", src: rn,
+     feature: "ldap_id_use_start_tls is now enabled by default (prevents MITM on identity lookups)"}
+  - {id: nf-certmonger-07920, component: idm-cert, added_in: "10.0", src: rn,
+     feature: "certmonger 0.79.20 (token handling and bug fixes)"}
+  - {id: nf-kerberos-ecdh-pkinit, component: kerberos, added_in: "10.0", src: rn,
+     feature: "Kerberos now supports Elliptic Curve Diffie-Hellman key agreement for PKINIT (pkinit_dh_min_bits P-256/384/521)"}
+  - {id: nf-389ds-306, component: 389-ds, added_in: "10.0", src: rn,
+     feature: "389-ds-base 3.0.6 (error-log buffering, JSON audit logs, logconv.py)"}
+  - {id: nf-389ds-lmdb-full, component: 389-ds, added_in: "10.0", src: rn,
+     feature: "389-ds-base now fully supports LMDB (only database type for new instances)"}
+  - {id: nf-openldap-268, component: idm, added_in: "10.0", src: rn,
+     feature: "openldap 2.6.8 (improved TLS and Kerberos SASL with STARTTLS for ECC certs)"}
+  - {id: nf-ds-log-buffering, component: 389-ds, added_in: "10.0", src: rn,
+     feature: "Directory Server buffers the error, audit, and audit-fail logs (new buffering settings)"}
+  - {id: nf-pbkdf2-iterations, component: 389-ds, added_in: "10.0", src: rn,
+     feature: "Configurable hashing iterations for PBKDF2-* password storage schemes (nsslapd-pwdpbkdf2numiterations, default 100000)"}
+  - {id: nf-dsctl-substr-index-warn, component: 389-ds, added_in: "10.0", src: rn,
+     feature: "dsctl healthcheck now warns about creating a substring index on the membership attribute"}
+  - {id: nf-gssproxy-notify, component: idm, added_in: "10.0", src: rn,
+     feature: "gssproxy systemd service type changed from forking to notify (bootc compatibility)"}
+  - {id: nf-acme-ga-100, component: idm-cert, added_in: "10.0", src: rn,
+     feature: "ACME is now fully supported in IdM (90-day certificate validity)"}
+  - {id: nf-hsm-ga-100, component: idm-cert, added_in: "10.0", src: rn,
+     feature: "HSM is now fully supported in IdM (store CA/KRA key pairs and certificates on a Hardware Security Module)",
+     note: "Also re-announced in the 10.1 new-features list (see nf-hsm-ga-101)"}
+
+  # --- RHEL 10.1 -------------------------------------------------
+  - {id: nf-healthcheck-cert-expiry, component: idm, added_in: "10.1", src: rn,
+     feature: "ipa-healthcheck now warns about expiring HTTP, DS, and PKINIT certificates (28 days ahead)"}
+  - {id: nf-ansible-freeipa-1151, component: idm, added_in: "10.1", src: rn,
+     feature: "ansible-freeipa rebased to 1.15.1 (compatible with the redhat.rhel_idm collection namespace)"}
+  - {id: nf-healthcheck-krblastauth, component: idm, added_in: "10.1", src: rn,
+     feature: "Healthcheck warns if krbLastSuccessfulAuth is enabled (possible performance impact)"}
+  - {id: nf-uid-max-legacy, component: idm, added_in: "10.1", src: rn,
+     feature: "IdM now supports UIDs/GIDs up to the Linux maximum (2^32-1) for legacy-system compatibility (requires disabling subID)"}
+  - {id: nf-samba-4224, component: samba, added_in: "10.1", src: rn,
+     feature: "samba rebased to 4.22.4 (SMB3 directory leases, TCP-based LDAP/LDAPS DC queries)"}
+  - {id: nf-idm-upgrade-helper, component: idm, added_in: "10.1", src: rn,
+     feature: "Identity Management Upgrade Helper: a new app providing step-by-step instructions for upgrading an IdM environment to a newer RHEL version"}
+  - {id: nf-uniqueness-exclude-subtrees, component: 389-ds, added_in: "10.1", src: rn,
+     feature: "Exclude subtrees from attribute uniqueness verification via dsconf or the web console (uniqueness-exclude-subtrees)"}
+  - {id: nf-389ds-313, component: 389-ds, added_in: "10.1", src: rn,
+     feature: "389-ds-base rebased to 3.1.3 (session tracking, PBKDF2 iterations config, log buffering, CRYPT-YESCRYPT, JSON logs, dsidm fixes)"}
+  - {id: nf-uniqueness-matching-rules, component: 389-ds, added_in: "10.1", src: rn,
+     feature: "Custom matching rules in the Attribute Uniqueness plugin for searching uniqueness attributes"}
+  - {id: nf-389ds-json-logs, component: 389-ds, added_in: "10.1", src: rn,
+     feature: "JSON format available for the access and error logs in 389-ds-base"}
+  - {id: nf-dsidm-full-dn, component: 389-ds, added_in: "10.1", src: rn,
+     feature: "New dsidm list --full-dn option (returns full distinguished names)"}
+  - {id: nf-389ds-session-id, component: 389-ds, added_in: "10.1", src: rn,
+     feature: "389-ds-base logs now contain a session identifier for bind/modify operations (replication tracing)"}
+  - {id: nf-acme-es256, component: idm-cert, added_in: "10.1", src: rn,
+     feature: "ACME server adds support for the ES256 signature algorithm (interoperability with clients such as Caddy)"}
+  - {id: nf-idm-to-idm-migration-ga, component: idm, added_in: "10.1", src: rn,
+     feature: "IdM-to-IdM migration is now fully supported (use ipa-migrate to move IdM-specific data between IdM servers)",
+     note: "Graduated from Technology Preview (tp-idm-to-idm-migration, TP in 10.0)"}
+  - {id: nf-hsm-ga-101, component: idm-cert, added_in: "10.1", src: rn,
+     feature: "HSM is now fully supported in IdM (store CA/KRA key pairs and certificates on a Hardware Security Module)",
+     note: "Re-announced from the 10.0 new-features list (see nf-hsm-ga-100); listed in both per the release notes"}
+
+  # ============================================================================= #
+  # RHEL 9.x New features and enhancements (IdM subsection only). Verified
+  # minor-by-minor 9.0->9.8 (2026-10-25). Point-in-time: added_in = the minor whose
+  # release notes announced the item. Package rebases legitimately recur per minor.
+  # ============================================================================= #
+
+  # --- RHEL 9.0 (20) ---
+  - {id: nf-ds-no-global-changelog, component: 389-ds, added_in: "9.0", src: rn, feature: "Directory Server no longer uses a global changelog (now integrated per-suffix)"}
+  - {id: nf-ansible-freeipa-appstream, component: idm, added_in: "9.0", src: rn, feature: "ansible-freeipa is now available in the AppStream repository with all dependencies"}
+  - {id: nf-automount-ansible-modules, component: idm, added_in: "9.0", src: rn, feature: "IdM supports the automountlocation, automountmap, and automountkey Ansible modules"}
+  - {id: nf-subid-shadow-utils, component: idm, added_in: "9.0", src: rn, feature: "Support for managing subID ranges is available in shadow-utils"}
+  - {id: nf-subid-idm, component: idm, added_in: "9.0", src: rn, feature: "Support for managing subID ranges is available in IdM (CLI/WebUI)"}
+  - {id: nf-idm-demodularized, component: idm, added_in: "9.0", src: rn, feature: "IdM installation packages have been demodularized (install directly with dnf)"}
+  - {id: nf-ansible-automation-hub, component: idm, added_in: "9.0", src: rn, feature: "ansible-freeipa modules available via Ansible Automation Hub collections"}
+  - {id: nf-ansible-freeipa-remote, component: idm, added_in: "9.0", src: rn, feature: "ansible-freeipa modules can now be executed remotely on IdM clients"}
+  - {id: nf-ipadnsconfig-member, component: idm-dns, added_in: "9.0", src: rn, feature: "The ipadnsconfig module now requires action: member to exclude a global forwarder"}
+  - {id: nf-auto-private-groups-ad, component: sssd, added_in: "9.0", src: rn, feature: "Automatic private groups for AD users support centralized configuring"}
+  - {id: nf-bind-logging, component: idm-dns, added_in: "9.0", src: rn, feature: "Customizable logging settings for BIND (/etc/named/ipa-logging-ext.conf)"}
+  - {id: nf-getkeytab-autodiscovery, component: idm, added_in: "9.0", src: rn, feature: "Autodiscovery of IdM servers when retrieving an IdM keytab (ipa-getkeytab)"}
+  - {id: nf-samba-4155, component: samba, added_in: "9.0", src: rn, feature: "RHEL 9 provides Samba 4.15.5"}
+  - {id: nf-sssctl-analyze, component: sssd, added_in: "9.0", src: rn, feature: "Tracking client requests using the log analyzer tool (sssctl analyze)"}
+  - {id: nf-sssd-backtraces, component: sssd, added_in: "9.0", src: rn, feature: "SSSD now logs backtraces by default"}
+  - {id: nf-sssd-ssh-hash, component: sssd, added_in: "9.0", src: rn, feature: "SSSD default SSH hashing value now consistent with OpenSSH (ssh_hash_known_hosts=false)"}
+  - {id: nf-ds-120, component: 389-ds, added_in: "9.0", src: rn, feature: "Directory Server 12.0 based on upstream version 2.0.14"}
+  - {id: nf-ds-tmpfs, component: 389-ds, added_in: "9.0", src: rn, feature: "Directory Server stores memory-mapped DB files on a tmpfs file system (/dev/shm/)"}
+  - {id: nf-freeradius-redesign, component: freeradius, added_in: "9.0", src: rn, feature: "FreeRADIUS support is now redesigned (aligned with IdM; some modules dropped)"}
+  - {id: nf-named-openssl-dnssec, component: idm-dns, added_in: "9.0", src: rn, feature: "The IdM named daemon now uses OpenSSL for DNSSEC validation (removes bind-pkcs11-utils)"}
+
+  # --- RHEL 9.1 (16) ---
+  - {id: nf-sssd-sid-memcache, component: sssd, added_in: "9.1", src: rn, feature: "SSSD now supports memory caching for SID requests"}
+  - {id: nf-servicedelegation-modules, component: idm, added_in: "9.1", src: rn, feature: "The ipaservicedelegationtarget and ipaservicedelegationrule Ansible modules are now available (S4U2proxy)"}
+  - {id: nf-sssd-anon-pkinit-fast, component: sssd, added_in: "9.1", src: rn, feature: "SSSD support for anonymous PKINIT for FAST (Kerberos armoring)"}
+  - {id: nf-rsn-91, component: idm-cert, added_in: "9.1", src: rn, feature: "IdM now supports Random Serial Numbers (dogtagpki 11.2.0, RSNv3)"}
+  - {id: nf-ldap-bind-expiry-limit, component: idm, added_in: "9.1", src: rn, feature: "IdM supports a limit on the number of LDAP binds allowed after a user password has expired"}
+  - {id: nf-ipasmartcard-roles, component: idm, added_in: "9.1", src: rn, feature: "New ipasmartcard_server and ipasmartcard_client Ansible roles (replace ipa-advise)"}
+  - {id: nf-ad-trust-ws2022, component: idm, added_in: "9.1", src: rn, feature: "IdM supports configuring an AD Trust with Windows Server 2022"}
+  - {id: nf-dnskeysyncd-debug, component: idm-dns, added_in: "9.1", src: rn, feature: "ipa-dnskeysyncd and ipa-ods-exporter debug messages no longer logged to /var/log/messages by default"}
+  - {id: nf-samba-4161, component: samba, added_in: "9.1", src: rn, feature: "samba rebased to 4.16.1 (samba-dcerpcd, renamed CTDB roles)"}
+  - {id: nf-sssd-direct-ws2022, component: sssd, added_in: "9.1", src: rn, feature: "SSSD supports direct integration with Windows Server 2022"}
+  - {id: nf-sssd-multithreaded, component: sssd, added_in: "9.1", src: rn, feature: "Improved SSSD multi-threaded performance (no request serialization)"}
+  - {id: nf-ds-cancel-automember, component: 389-ds, added_in: "9.1", src: rn, feature: "Directory Server supports canceling the Auto Membership plug-in task"}
+  - {id: nf-ldapdelete-recursive, component: 389-ds, added_in: "9.1", src: rn, feature: "Directory Server supports recursive delete operations via ldapdelete (Tree Delete Control)"}
+  - {id: nf-ds-replication-inf, component: 389-ds, added_in: "9.1", src: rn, feature: "Set basic replication options during Directory Server installation (.inf file)"}
+  - {id: nf-ds-nonroot-instance, component: 389-ds, added_in: "9.1", src: rn, feature: "Directory Server supports instance creation by a non-root user (dscreate ds-root)"}
+  - {id: nf-pki-renamed-idm-pki, component: idm-cert, added_in: "9.1", src: rn, feature: "pki packages renamed to idm-pki"}
+
+  # --- RHEL 9.2 (25) ---
+  - {id: nf-sssd-homedir-lowercase, component: sssd, added_in: "9.2", src: rn, feature: "SSSD support for converting home directories to lowercase (%h in override_homedir)"}
+  - {id: nf-sssd-shadow-pwchange, component: sssd, added_in: "9.2", src: rn, feature: "SSSD supports changing LDAP user passwords with the shadow password policy"}
+  - {id: nf-min-lifetime, component: idm, added_in: "9.2", src: rn, feature: "IdM supports the min_lifetime parameter (gssproxy service ticket renewal)"}
+  - {id: nf-ipapwpolicy-options, component: idm, added_in: "9.2", src: rn, feature: "The ipapwpolicy ansible-freeipa module supports maxrepeat/maxsequence/dictcheck/usercheck options"}
+  - {id: nf-ipanetgroup-module, component: idm, added_in: "9.2", src: rn, feature: "IdM supports the ipanetgroup Ansible management module"}
+  - {id: nf-ipaclient-dns-resolver, component: idm, added_in: "9.2", src: rn, feature: "New ipaclient_configure_dns_resolver and ipaclient_dns_servers role variables"}
+  - {id: nf-ipaclient-otp, component: idm, added_in: "9.2", src: rn, feature: "ipaclient role can install a client with an OTP without prior Ansible controller modification"}
+  - {id: nf-ms-pac-enforce, component: kerberos, added_in: "9.2", src: rn, feature: "IdM enforces the presence of the MS-PAC structure in Kerberos tickets (CVE-2022-37967)"}
+  - {id: nf-kdc-fips140-3-template, component: kerberos, added_in: "9.2", src: rn, feature: "New realm configuration template for KDC enabling FIPS 140-3-compliant key encryption (AES HMAC SHA-2)"}
+  - {id: nf-pam-pwhistory-conf, component: idm, added_in: "9.2", src: rn, feature: "Configure pam_pwhistory using a configuration file (/etc/security/pwhistory.conf)"}
+  - {id: nf-ad-cert-mapping, component: idm, added_in: "9.2", src: rn, feature: "IdM supports new Active Directory certificate mapping templates (Serial Number, Subject Key Id, User SID)"}
+  - {id: nf-samba-4175, component: samba, added_in: "9.2", src: rn, feature: "samba rebased to 4.17.5 (JSON output for smbstatus)"}
+  - {id: nf-ipa-client-pkinit, component: idm, added_in: "9.2", src: rn, feature: "ipa-client-install now supports authentication with PKINIT"}
+  - {id: nf-est-protocol, component: idm-cert, added_in: "9.2", src: rn, feature: "IdM and Certificate System now support the EST protocol (RFC 7030)"}
+  - {id: nf-sssd-negcache-sid, component: sssd, added_in: "9.2", src: rn, feature: "Enhanced negative cache usage (improves SSSD lookups by SID)"}
+  - {id: nf-ds-ecdsa-tls, component: 389-ds, added_in: "9.2", src: rn, feature: "Directory Server supports ECDSA private keys for TLS"}
+  - {id: nf-ds-extended-search-logging, component: 389-ds, added_in: "9.2", src: rn, feature: "Directory Server supports extended logging of search operations"}
+  - {id: nf-ds-nunc-stans-level, component: 389-ds, added_in: "9.2", src: rn, feature: "The NUNC_STANS error logging level was replaced by the new 1048576 logging level"}
+  - {id: nf-ds-security-log, component: 389-ds, added_in: "9.2", src: rn, feature: "Directory Server introduces the security log"}
+  - {id: nf-ds-compress-logs, component: 389-ds, added_in: "9.2", src: rn, feature: "Directory Server can compress archived log files"}
+  - {id: nf-pammoduleisthreadsafe, component: idm, added_in: "9.2", src: rn, feature: "New pamModuleIsThreadSafe configuration option"}
+  - {id: nf-ds-cert-bundle-import, component: 389-ds, added_in: "9.2", src: rn, feature: "Directory Server can import a certificate bundle"}
+  - {id: nf-ds-original-entrydn, component: 389-ds, added_in: "9.2", src: rn, feature: "Directory Server returns a DN in the same spelling it was added (nsslapd-return-original-entrydn)"}
+  - {id: nf-mit-pac-signatures, component: kerberos, added_in: "9.2", src: rn, feature: "MIT Kerberos supports the Ticket and Extended KDC MS-PAC signatures (CVE-2020-17049, CVE-2022-37967)"}
+  - {id: nf-ds-auditlog-display-attrs, component: 389-ds, added_in: "9.2", src: rn, feature: "New nsslapd-auditlog-display-attrs Directory Server audit-log parameter"}
+
+  # --- RHEL 9.3 (19) ---
+  - {id: nf-samba-4186, component: samba, added_in: "9.3", src: rn, feature: "samba rebased to 4.18.6"}
+  - {id: nf-ipaclient-subid, component: idm, added_in: "9.3", src: rn, feature: "The ipaclient role can configure user subID ranges at the IdM level (ipaclient_subid)"}
+  - {id: nf-multi-group-service-task, component: idm, added_in: "9.3", src: rn, feature: "Manage multiple IdM groups and services in a single Ansible task (groups/services options)"}
+  - {id: nf-ipaserver-rsn, component: idm-cert, added_in: "9.3", src: rn, feature: "ansible-freeipa ipaserver role now supports Random Serial Numbers (RSNv3)"}
+  - {id: nf-ipa-4102, component: idm, added_in: "9.3", src: rn, feature: "ipa rebased to 4.10.2 (faster cert search/list in CLI and Web UI)"}
+  - {id: nf-ipaserver-topology-opts, component: idm, added_in: "9.3", src: rn, feature: "ipaserver_remove_on_server and ipaserver_ignore_topology_disconnect role options"}
+  - {id: nf-min-lifetime-93, component: idm, added_in: "9.3", src: rn, feature: "IdM supports the min_lifetime parameter (re-announced)"}
+  - {id: nf-ipacert-module, component: idm-cert, added_in: "9.3", src: rn, feature: "Manage IdM certificates using the ipacert Ansible module"}
+  - {id: nf-optional-pac-tkt-chksum, component: kerberos, added_in: "9.3", src: rn, feature: "The optional_pac_tkt_chksum option helps preserve interoperability between krb5 versions"}
+  - {id: nf-rbcd, component: idm, added_in: "9.3", src: rn, feature: "IdM supports resource-based constrained delegation (RBCD)"}
+  - {id: nf-389ds-234, component: 389-ds, added_in: "9.3", src: rn, feature: "RHEL 9.3 provides 389-ds-base 2.3.4"}
+  - {id: nf-ds-close-on-failed-bind, component: 389-ds, added_in: "9.3", src: rn, feature: "Directory Server can close a client connection if a bind fails (nsslapd-close-on-failed-bind)"}
+  - {id: nf-automember-no-cleanup, component: 389-ds, added_in: "9.3", src: rn, feature: "Automembership plug-in no longer cleans up groups by default (--cleanup opt-in)"}
+  - {id: nf-passwordadminskipinfo, component: 389-ds, added_in: "9.3", src: rn, feature: "New passwordAdminSkipInfoUpdate: on/off configuration option"}
+  - {id: nf-slapi-memberof, component: 389-ds, added_in: "9.3", src: rn, feature: "New slapi_memberof() plug-in function for Directory Server plug-ins and client applications"}
+  - {id: nf-nsrole-indexed, component: 389-ds, added_in: "9.3", src: rn, feature: "Directory Server replaces the virtual nsRole attribute with an indexed attribute for managed and filtered roles"}
+  - {id: nf-nsslapd-numlisteners-opt, component: 389-ds, added_in: "9.3", src: rn, feature: "New nsslapd-numlisteners configuration option"}
+  - {id: nf-pac-privsvr-entype, component: kerberos, added_in: "9.3", src: rn, feature: "IdM supports controlling the encryption type used to sign the PAC (pac_privsvr_entype)"}
+  - {id: nf-idm-api-ga-93, component: idm-api, added_in: "9.3", src: rn, feature: "Identity Management API is now fully supported (graduated from Technology Preview as of RHEL 9.3)"}
+
+  # --- RHEL 9.4 (19) ---
+  - {id: nf-sssd-passwordless-fido2, component: sssd, added_in: "9.4", src: rn, feature: "A new passwordless authentication method is available in SSSD (FIDO2/passkey via libfido2)"}
+  - {id: nf-ansible-renamed-state, component: idm, added_in: "9.4", src: rn, feature: "ansible-freeipa ipauser and ipagroup modules support a new renamed state"}
+  - {id: nf-external-idp-auth, component: idm-idp, added_in: "9.4", src: rn, feature: "IdM users can now use external identity providers to authenticate to IdM (OAuth 2 device authorization flow)"}
+  - {id: nf-ipa-411, component: idm, added_in: "9.4", src: rn, feature: "ipa rebased to 4.11 (FIDO2 passkey support, RBCD, rebased dependencies)"}
+  - {id: nf-kcm-expired-tickets, component: kerberos, added_in: "9.4", src: rn, feature: "Deleting expired KCM Kerberos tickets (auto-evict oldest when storage limit reached)"}
+  - {id: nf-idoverride-idview-modules, component: idm, added_in: "9.4", src: rn, feature: "IdM supports the idoverrideuser, idoverridegroup and idview Ansible modules"}
+  - {id: nf-idp-ansible-module, component: idm-idp, added_in: "9.4", src: rn, feature: "The idp Ansible module allows associating IdM users with external IdPs"}
+  - {id: nf-getcert-add-ca-rc, component: idm-cert, added_in: "9.4", src: rn, feature: "getcert add-ca returns a new return code if a certificate is already present or tracked"}
+  - {id: nf-dnszone-delegation, component: idm-dns, added_in: "9.4", src: rn, feature: "Delegation of DNS zone management is now enabled in ansible-freeipa (dnszone module)"}
+  - {id: nf-otp-enforce-ldap, component: idm, added_in: "9.4", src: rn, feature: "Enforcing OTP usage for all LDAP clients"}
+  - {id: nf-runasuser-group, component: idm, added_in: "9.4", src: rn, feature: "The runasuser_group parameter is now available in ansible-freeipa ipasudorule"}
+  - {id: nf-389ds-245, component: 389-ds, added_in: "9.4", src: rn, feature: "389-ds-base rebased to 2.4.5"}
+  - {id: nf-thp-disable-nsslapd, component: 389-ds, added_in: "9.4", src: rn, feature: "Transparent Huge Pages are now disabled by default for the ns-slapd process (THP_DISABLE=1)"}
+  - {id: nf-lastloginhistsize, component: 389-ds, added_in: "9.4", src: rn, feature: "New lastLoginHistSize configuration attribute for the Account Policy plug-in"}
+  - {id: nf-notes-m-mfa, component: 389-ds, added_in: "9.4", src: rn, feature: "New notes=M message in the access log to identify MFA binds"}
+  - {id: nf-inchainmatch, component: 389-ds, added_in: "9.4", src: rn, feature: "New inchainMatch matching rule (ancestry searches of LDAP entries)"}
+  - {id: nf-haproxy-389ds, component: 389-ds, added_in: "9.4", src: rn, feature: "HAProxy protocol is now supported for 389-ds-base (nsslapd-haproxy-trusted-ip)"}
+  - {id: nf-samba-4194, component: samba, added_in: "9.4", src: rn, feature: "samba rebased to 4.19.4 (full GnuTLS cryptography)"}
+  - {id: nf-idm-api-ga-94, component: idm-api, added_in: "9.4", src: rn, feature: "Identity Management API is now fully supported (reconfirmed; GA since 9.3)"}
+
+  # --- RHEL 9.5 (6; IdM subsection only, SSSD subsection excluded per scope) ---
+  - {id: nf-jwcrypto-156-95, component: idm, added_in: "9.5", src: rn, feature: "python-jwcrypto rebased to 1.5.6 (JWE token DoS security fix)"}
+  - {id: nf-ansible-freeipa-1132, component: idm, added_in: "9.5", src: rn, feature: "ansible-freeipa rebased to 1.13.2 (dynamic IdM server inventory, ansible-core 2.14+)"}
+  - {id: nf-ipa-4120, component: idm, added_in: "9.5", src: rn, feature: "ipa rebased to 4.12.0 (OTP enforcement, client enrollment via trusted AD users)"}
+  - {id: nf-certmonger-07920-95, component: idm-cert, added_in: "9.5", src: rn, feature: "certmonger rebased to 0.79.20"}
+  - {id: nf-389ds-252, component: 389-ds, added_in: "9.5", src: rn, feature: "389-ds-base rebased to 2.5.2"}
+  - {id: nf-mit-krb5-tcp-timeout, component: kerberos, added_in: "9.5", src: rn, feature: "Improved MIT krb5 TCP connection timeout handling (request_timeout)"}
+
+  # --- RHEL 9.6 (9) ---
+  - {id: nf-ipa-idrange-fix-96, component: idm, added_in: "9.6", src: rn, feature: "New ipa-idrange-fix tool to manage IdM ID range inconsistencies"}
+  - {id: nf-kerberos-ecdh-pkinit-96, component: kerberos, added_in: "9.6", src: rn, feature: "Kerberos supports the Elliptic Curve Diffie-Hellman key agreement algorithm for PKINIT (pkinit_dh_min_bits P-256/384/521)"}
+  - {id: nf-ansible-freeipa-1145-96, component: idm, added_in: "9.6", src: rn, feature: "ansible-freeipa rebased to 1.14.5 (module_defaults, bulk sudo rule management)"}
+  - {id: nf-389ds-261, component: 389-ds, added_in: "9.6", src: rn, feature: "389-ds-base rebased to 2.6.1 (error-log buffering, JSON audit logs, deferred memberOf, logconv.py)"}
+  - {id: nf-openldap-268-96, component: idm, added_in: "9.6", src: rn, feature: "openldap rebased to 2.6.8 (improved TLS and Kerberos SASL with STARTTLS/ECC)"}
+  - {id: nf-memberofdeferredupdate, component: 389-ds, added_in: "9.6", src: rn, feature: "New memberOfDeferredUpdate: on/off attribute in Directory Server (defer MemberOf updates)"}
+  - {id: nf-ds-log-buffering-96, component: 389-ds, added_in: "9.6", src: rn, feature: "Directory Server provides buffering of the error, audit, and audit-fail logs"}
+  - {id: nf-ds-crypt-clear-upgrade, component: 389-ds, added_in: "9.6", src: rn, feature: "Directory Server can update passwords with CRYPT or CLEAR hashing after a successful bind (nsslapd-scheme-list-no-upgrade-hash)"}
+  - {id: nf-hsm-ga-96, component: idm-cert, added_in: "9.6", src: rn, feature: "HSM is now fully supported in IdM (store CA/KRA key pairs and certificates on an HSM)"}
+
+  # --- RHEL 9.7 (12) ---
+  - {id: nf-healthcheck-cert-expiry-97, component: idm, added_in: "9.7", src: rn, feature: "ipa-healthcheck now warns about expiring HTTP, DS, and PKINIT certificates (28 days ahead)"}
+  - {id: nf-ansible-freeipa-1151-97, component: idm, added_in: "9.7", src: rn, feature: "ansible-freeipa rebased to 1.15.1 (redhat.rhel_idm collection namespace)"}
+  - {id: nf-uid-max-97, component: idm, added_in: "9.7", src: rn, feature: "IdM supports UIDs up to the Linux maximum (2^32-1) for legacy-system compatibility (requires disabling subID)"}
+  - {id: nf-healthcheck-krblastauth-97, component: idm, added_in: "9.7", src: rn, feature: "Healthcheck warns if krbLastSuccessfulAuth is enabled (possible performance impact)"}
+  - {id: nf-idm-migration-ga-97, component: idm, added_in: "9.7", src: rn, feature: "IdM-to-IdM migration now fully supported (ipa-migrate; graduated from Technology Preview)"}
+  - {id: nf-samba-4224-97, component: samba, added_in: "9.7", src: rn, feature: "samba rebased to 4.22.4 (SMB3 directory leases, TCP-based LDAP/LDAPS DC queries)"}
+  - {id: nf-389ds-270, component: 389-ds, added_in: "9.7", src: rn, feature: "389-ds-base rebased to 2.7.0"}
+  - {id: nf-dsctl-substr-index-97, component: 389-ds, added_in: "9.7", src: rn, feature: "dsctl healthcheck now warns about creating a substring index on the membership attribute (DSMOLE0002)"}
+  - {id: nf-uniqueness-matching-97, component: 389-ds, added_in: "9.7", src: rn, feature: "Custom matching rules in the Attribute Uniqueness plugin to search uniqueness attributes"}
+  - {id: nf-cockpit-session-recording-97, component: idm, added_in: "9.7", src: rn, feature: "cockpit-session-recording rebased to 20-1.el9 (PatternFly 6)"}
+  - {id: nf-acme-es256-97, component: idm-cert, added_in: "9.7", src: rn, feature: "ACME server adds support for the ES256 signature algorithm"}
+  - {id: nf-hsm-ga-97, component: idm-cert, added_in: "9.7", src: rn, feature: "HSM is now fully supported in IdM (CA/KRA key storage; existing CA/KRA migration not supported)"}
+
+  # --- RHEL 9.8 (13; IdM subsection only, SSSD subsection excluded per scope) ---
+  - {id: nf-pwpolicy-libpwquality-98, component: idm, added_in: "9.8", src: rn, feature: "IdM password policies support libpwquality character-credit options (--dcredit/--ucredit/--lcredit/--ocredit)"}
+  - {id: nf-samba-4230-98, component: samba, added_in: "9.8", src: rn, feature: "samba rebased to 4.23.0 (SMB3 UNIX Extensions default, experimental SMB3-over-QUIC)"}
+  - {id: nf-ipa-4130, component: idm, added_in: "9.8", src: rn, feature: "ipa rebased to 4.13.0 (beta web interface [Technology Preview], ipa-idrange-fix, 32-bit ID ranges)"}
+  - {id: nf-cepces-0312, component: idm-cert, added_in: "9.8", src: rn, feature: "cepces rebased to 0.3.12 (GSSAPI channel binding; Windows Server 2025 compatibility)"}
+  - {id: nf-dsctl-dbverify-98, component: 389-ds, added_in: "9.8", src: rn, feature: "dsctl dbverify provides clearer output when a specified backend does not exist"}
+  - {id: nf-external-pwreset-agents, component: idm, added_in: "9.8", src: rn, feature: "You can configure external password reset agents in IdM (dedicated LDAP system account, no forced-change flag)"}
+  - {id: nf-lwca-hsm, component: idm-cert, added_in: "9.8", src: rn, feature: "Support for generating LWCA certificates and private keys on an HSM"}
+  - {id: nf-pki-1171, component: idm-cert, added_in: "9.8", src: rn, feature: "pki rebased to 11.7.1 (Sub-CA fixes)"}
+  - {id: nf-no-reset-lockout, component: idm, added_in: "9.8", src: rn, feature: "Automated services (crond, systemd-user) no longer reset account lockout (faillock) counters"}
+  - {id: nf-ansible-freeipa-1160-98, component: idm, added_in: "9.8", src: rn, feature: "ansible-freeipa rebased to 1.16.0 (sysaccount, ipapasskeyconfig modules, passkey support)"}
+  - {id: nf-ansible-passkey-type, component: idm, added_in: "9.8", src: rn, feature: "ansible-freeipa adds support for the passkey authentication type in management modules"}
+  - {id: nf-389ds-280, component: 389-ds, added_in: "9.8", src: rn, feature: "389-ds-base rebased to 2.8.0"}
+  - {id: nf-ipa-certupdate-force-server, component: idm, added_in: "9.8", src: rn, feature: "You can specify an IdM server from which to update the local CA trust store (ipa-certupdate --force-server)"}
