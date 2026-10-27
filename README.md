@@ -1,7 +1,7 @@
 # idm-upgrade-helper
 
 An interactive, **read-only** command-line advisor for upgrading Red Hat Identity
-Management (IdM) / FreeIPA servers across RHEL minor and major versions. It reproduces
+Management (IdM) servers across RHEL minor and major versions. It reproduces
 the step-by-step guidance of Red Hat's "IdM Upgrade Helper" as an on-box CLI, driven by
 version-keyed catalogs of deprecated/removed functionality, Technology Previews, new
 features, and known issues (RHEL 8.0 → 10.2).
