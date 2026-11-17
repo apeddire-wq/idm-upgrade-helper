@@ -946,7 +946,8 @@ def _load_healthcheck(out, args):
     out.line("Running ipa-healthcheck (read-only)…")
     try:
         proc = subprocess.run([exe, "--output-type", "json"],
-                              capture_output=True, text=True, timeout=HC_TIMEOUT)
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              universal_newlines=True, timeout=HC_TIMEOUT)
     except (subprocess.TimeoutExpired, OSError) as exc:
         return None, "ipa-healthcheck could not be executed (%s)" % exc
     # ipa-healthcheck exits 1 when it finds issues but still prints JSON on stdout.
@@ -1156,7 +1157,8 @@ def _healthcheck_gate_for_apply(out, args):
     out.line("Verifying server health with ipa-healthcheck…")
     try:
         proc = subprocess.run([exe, "--output-type", "json"],
-                              capture_output=True, text=True, timeout=HC_TIMEOUT)
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              universal_newlines=True, timeout=HC_TIMEOUT)
         results = json.loads(proc.stdout or "[]")
     except (subprocess.TimeoutExpired, OSError, ValueError) as exc:
         out.sev("warning", "ipa-healthcheck could not be run (%s)." % exc)
@@ -1273,8 +1275,9 @@ def run_wizard(out, cat, args):
                  "the advice below it can EXECUTE the minor upgrade on this server "
                  "(guarded).")
     else:
-        out.line("Read-only upgrade advisor for RHEL IdM / FreeIPA. This tool never "
-                 "changes your system.")
+        out.line("Upgrade advisor for RHEL IdM / FreeIPA, running in read-only (advisory) "
+                 "mode: this run only prints guidance and will not change your system. "
+                 "(To perform a guarded automated minor upgrade, run `minor --apply`.)")
 
     ctx = step_upgrade_options(out, cat, args)
     if ctx.get("stop"):
