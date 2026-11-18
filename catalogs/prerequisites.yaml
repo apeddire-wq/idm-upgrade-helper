@@ -17,7 +17,7 @@ prerequisites:
   - id: ports-firewall                        # lab: prerequisitesData.portsAndFirewallsRequirements
     title: "Port requirements"
     severity: warning
-    text: "Required open: 80 (HTTP/OCSP+CRL, redirects to 443), 443, 389 (LDAP+STARTTLS/GSSAPI), 88/464 (Kerberos), 53 (if integrated DNS). Keep 8080/8443 (pki-tomcat) firewalled. 749 only if remote kadmin used."
+    text: "Required open — TCP: 80 (HTTP/OCSP+CRL, redirects to 443), 443 (HTTPS), 389 (LDAP, STARTTLS/GSSAPI), 636 (LDAPS), 88 & 464 (Kerberos), 53 (DNS, only with integrated DNS); UDP: 88 & 464 (Kerberos), 53 (DNS, only with integrated DNS). Keep 8080/8443 (pki-tomcat) firewalled. 749 only if remote kadmin used. Verify: nmap -p 80,443,389,636,88,464,53 <host> and nmap -sU -p 88,464,53 <host>."
     docs:
       "8": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#port-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
       "9": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/installing_identity_management/preparing-the-system-for-ipa-server-installation_installing-identity-management#port-requirements-for-idm_preparing-the-system-for-ipa-server-installation"
